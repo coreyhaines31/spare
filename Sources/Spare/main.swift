@@ -23,19 +23,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.item.button?.toolTip = "Spare — \(health.title)"
         }
         monitor.start()
-        if CommandLine.arguments.contains("--window") {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 700),
-                                  styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-            window.title = "Spare"
-            window.contentView = NSHostingView(rootView: Dashboard(monitor: monitor))
-            window.center()
-            window.isReleasedWhenClosed = false
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            self.window = window
-        } else {
-            toggle()
+        monitor.onOpenWindow = { [weak self] in self?.showWindow() }
+        if CommandLine.arguments.contains("--window") { showWindow() }
+        else { toggle() }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showWindow()
+        return true
+    }
+
+    private func showWindow() {
+        popover.performClose(nil)
+        if window == nil {
+            let created = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 700),
+                                   styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
+            created.title = "Spare"
+            created.contentView = NSHostingView(rootView: Dashboard(monitor: monitor))
+            created.center()
+            created.isReleasedWhenClosed = false
+            window = created
         }
+        window?.deminiaturize(nil)
+        window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func toggle() {
         if popover.isShown { popover.performClose(nil) }

@@ -1,5 +1,6 @@
 import SwiftUI
 import SpareCore
+import ServiceManagement
 
 struct Dashboard: View {
     @ObservedObject var monitor: Monitor
@@ -20,6 +21,11 @@ struct Dashboard: View {
                 Text("Spare").font(.system(size: 19, weight: .semibold, design: .rounded))
                 Spacer()
                 Menu {
+                    Button("Open in a window") { monitor.onOpenWindow?() }
+                    Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
+                    if monitor.loginStatus == .requiresApproval {
+                        Button("Approve in Login Items…") { SMAppService.openSystemSettingsLoginItems() }
+                    }
                     Toggle("Warn me about sustained pressure", isOn: Binding(get: { monitor.alerts }, set: monitor.setAlerts))
                     Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                     Divider()

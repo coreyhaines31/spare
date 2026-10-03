@@ -3,6 +3,7 @@ import SwiftUI
 import SpareCore
 import CSpare
 import UserNotifications
+import ServiceManagement
 
 final class Monitor: ObservableObject {
     @Published var workloads: [Workload] = []
@@ -11,6 +12,24 @@ final class Monitor: ObservableObject {
     @Published var error: String?
     @Published var notice: String?
     @Published var alerts = UserDefaults.standard.bool(forKey: "alerts")
+    @Published var loginStatus = SMAppService.mainApp.status
+    var onOpenWindow: (() -> Void)?
+    var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() }
+            else { try SMAppService.mainApp.unregister() }
+            loginStatus = SMAppService.mainApp.status
+            if loginStatus == .requiresApproval {
+                notice = "Allow Spare in System Settings → General → Login Items to finish enabling launch at login."
+            }
+        } catch {
+            loginStatus = SMAppService.mainApp.status
+            notice = "Couldn’t change launch at login: \(error.localizedDescription)"
+        }
+    }
+
     private let queue = DispatchQueue(label: "com.spareformac.sampler", qos: .utility)
     private let sampler = Sampler()
     private let resolver = ProjectResolver()
@@ -28,6 +47,7 @@ final class Monitor: ObservableObject {
     private func refresh() {
         guard !busy else { return }
         busy = true
+        loginStatus = SMAppService.mainApp.status
         let apps = NSWorkspace.shared.runningApplications.compactMap { app -> AppRecord? in
             guard let url = app.bundleURL, let name = app.localizedName else { return nil }
             return AppRecord(pid: app.processIdentifier, name: name, path: url.path,
