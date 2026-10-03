@@ -29,7 +29,17 @@ public enum WorkloadGrouper {
             if groups[workload.id] == nil { groups[workload.id] = workload }
             groups[workload.id]?.processes.append(process)
         }
-        return groups.values.sorted { $0.memory > $1.memory }
+        return groups.values.map { original in
+            var group = original
+            if group.kind != .background {
+                let count = group.processes.count
+                group.subtitle = "\(group.kind.label) · \(count) process\(count == 1 ? "" : "es")"
+                if !group.ports.isEmpty {
+                    group.subtitle += " · port " + group.ports.prefix(3).map(String.init).joined(separator: ", ")
+                }
+            }
+            return group
+        }.sorted { $0.memory > $1.memory }
     }
 
     private static func ancestors(_ process: ProcessRecord, in records: [Int32: ProcessRecord]) -> [ProcessRecord] {
