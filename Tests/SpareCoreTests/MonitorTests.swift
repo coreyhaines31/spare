@@ -1,5 +1,6 @@
 import XCTest
 import CSpare
+import Darwin
 @testable import SpareCore
 
 final class MonitorTests: XCTestCase {
@@ -69,4 +70,39 @@ final class MonitorTests: XCTestCase {
         fixture.waitUntilExit()
         XCTAssertEqual(fixture.terminationReason, .uncaughtSignal)
     }
+    func testListeningPortDetection() throws {
+        let descriptor = socket(AF_INET, SOCK_STREAM, 0)
+        XCTAssertGreaterThanOrEqual(descriptor, 0)
+        defer { close(descriptor) }
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_addr.s_addr = inet_addr("127.0.0.1")
+        let bound = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.bind(descriptor, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        XCTAssertEqual(bound, 0)
+        XCTAssertEqual(listen(descriptor, 1), 0)
+        var length = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let result = withUnsafeMutablePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(descriptor, $0, &length) }
+        }
+        XCTAssertEqual(result, 0)
+        var ports = [UInt16](repeating: 0, count: 64)
+        let count = spare_ports(getpid(), &ports, 64)
+        XCTAssertTrue(ports.prefix(Int(count)).contains(UInt16(bigEndian: address.sin_port)))
+    }
+
+    func testProjectResolverFindsParentManifest() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let child = root.appendingPathComponent("src/server")
+        try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("{}".utf8).write(to: root.appendingPathComponent("package.json"))
+        XCTAssertEqual(ProjectResolver().project(for: child.path), root.path)
+        XCTAssertEqual(ProjectResolver().project(for: ""), "")
+    }
+
 }
