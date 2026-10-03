@@ -40,6 +40,8 @@ final class Monitor: ObservableObject {
                 busy = false
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
+                    ready = false
+                    onUpdate?(health)
                     return
                 }
                 error = nil
