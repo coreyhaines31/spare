@@ -9,10 +9,13 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 - Live CPU, memory pressure, estimated memory usage, and short resource histories.
 - Apps grouped with their helpers; recognized development tools grouped by working folder or project.
 - Recognition for common local AI tools, including Claude, Codex, Ollama, Aider, and OpenCode.
-- Search and sorting by memory or CPU; unidentified background processes are available separately.
+- Apps, Projects, and Agents filters; search by name, folder, or local port; sorting by memory or CPU.
+- A specific review suggestion during elevated pressure, based on the largest visible resource user that Spare can help close.
+- Agent-owned runtime processes stay with the agent; independent development servers remain separate.
 - Explanations of what an app or project does and what closing it affects.
 - Listening TCP ports for recognized development processes.
 - Reviewed, graceful app quit and development-process stop requests. No automatic cleanup or force killing.
+- Optional launch at login and a persistent window available from the menu.
 - Menu bar warning indicator; optional notifications after about a minute of sustained pressure, with a ten-minute cooldown.
 
 ## Run locally
@@ -24,7 +27,7 @@ make app
 open dist/Spare.app
 ```
 
-Click the leaf in the menu bar to open Spare. The menu at the top right offers pressure notifications and Quit Spare. Notifications are off until you enable them. The app starts monitoring immediately and does not change login settings.
+Click the leaf in the menu bar to open Spare. The menu at the top right offers pressure notifications and Quit Spare. Notifications are off until you enable them. The app starts monitoring immediately. Launch at login is off by default; enable it from the menu if wanted. If macOS requires approval, the menu links to Login Items in System Settings.
 
 For a standalone inspection window:
 
@@ -32,7 +35,7 @@ For a standalone inspection window:
 open dist/Spare.app --args --window
 ```
 
-Quit an already running copy first when changing launch arguments. For a read-only system snapshot:
+You can also choose **Open in a window** from the menu, or open Spare again from Finder. Quit an already running copy first when changing launch arguments. For a read-only system snapshot:
 
 ```sh
 dist/Spare.app/Contents/MacOS/Spare --snapshot
@@ -61,7 +64,7 @@ Quit requests can be refused or delayed by an app. Development stop sends SIGTER
 
 All monitoring stays on your Mac. No account, telemetry, cloud service, network requests, command-line arguments, environment variables, or tab contents are collected. The last 15 minutes of system samples are held in memory only. Notification preference is saved locally.
 
-This MVP cannot identify individual browser tabs, inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Login launch, signed updates, and richer attribution are future work.
+This MVP cannot identify individual browser tabs, inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Signed updates and richer attribution are future work. Review suggestions identify measured resource use; they do not prove that a workload is causing a slowdown or that it is safe to interrupt.
 
 ## License
 
