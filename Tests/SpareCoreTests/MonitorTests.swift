@@ -105,4 +105,17 @@ final class MonitorTests: XCTestCase {
         XCTAssertEqual(ProjectResolver().project(for: ""), "")
     }
 
+    func testAgentOwnsItsRuntimeChildrenButNotIndependentServer() {
+        let records = [
+            ProcessRecord(pid: 30, name: "claude", path: "/usr/local/bin/claude", directory: "/work/api", memory: 100),
+            ProcessRecord(pid: 31, parent: 30, name: "node", path: "/usr/local/bin/node", directory: "/work/api", memory: 200),
+            ProcessRecord(pid: 32, parent: 31, name: "worker", path: "/usr/bin/worker", memory: 50),
+            ProcessRecord(pid: 33, name: "node", path: "/usr/local/bin/node", directory: "/work/api", memory: 400)
+        ]
+        let groups = WorkloadGrouper.group(records, apps: [])
+        XCTAssertEqual(groups.count, 2)
+        XCTAssertEqual(groups.first(where: { $0.kind == .agent })?.memory, 350)
+        XCTAssertEqual(groups.first(where: { $0.kind == .development })?.memory, 400)
+    }
+
 }

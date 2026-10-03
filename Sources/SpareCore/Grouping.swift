@@ -13,7 +13,8 @@ public enum WorkloadGrouper {
             var workload: Workload
             if let app = bundledApp {
                 workload = appGroup(app, processes: byPID)
-            } else if let owner = lineage.first(where: { ProcessClassifier.developerKind($0) != nil }),
+            } else if let owner = (lineage.first(where: { ProcessClassifier.developerKind($0) == .agent }) ??
+                        lineage.first(where: { ProcessClassifier.developerKind($0) != nil })),
                       let kind = ProcessClassifier.developerKind(owner) {
                 workload = developerGroup(owner, kind: kind, project: project(owner.directory))
             } else if let app = lineage.compactMap({ appByPID[$0.identity.pid] }).first {
