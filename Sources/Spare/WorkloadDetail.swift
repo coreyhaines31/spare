@@ -2,10 +2,13 @@ import SwiftUI
 import SpareCore
 
 struct WorkloadDetail: View {
-    let workload: Workload
+    let selection: Workload
     @ObservedObject var monitor: Monitor
     let back: () -> Void
-    @State private var reviewing = false
+    let select: (Workload) -> Void
+    @State private var review: Workload?
+    private var latest: Workload? { selection.current(in: monitor.workloads) }
+    private var workload: Workload { review ?? latest ?? selection }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -22,7 +25,7 @@ struct WorkloadDetail: View {
                     Spacer()
                     Label("\(DisplayFormat.percent(workload.cpu)) CPU", systemImage: "cpu")
                 }.font(.headline).padding(14).background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
-                Text("Readings captured when you opened this view.").font(.caption).foregroundStyle(.secondary)
+                Text(review != nil ? "Reviewing a fixed set of processes. New processes won’t be included." : latest == nil ? "This item is no longer detected. Readings below are its last captured values." : "Live readings · Updated every 3 seconds").font(.caption).foregroundStyle(.secondary)
                 section("What is this?", workload.explanation)
                 if let path = workload.projectPath {
                     section("Project", DisplayFormat.homePath(path))
@@ -32,25 +35,43 @@ struct WorkloadDetail: View {
                     section("Local server ports", workload.ports.map(String.init).joined(separator: ", ") + " · Listening on this Mac")
                 }
                 section("What happens if I close it?", workload.consequence)
-                if reviewing {
+                if review == nil && workload.sessions.count > 1 {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Individual sessions").font(.headline)
+                        Text("Review one session to leave the others running.").font(.caption).foregroundStyle(.secondary)
+                        ForEach(workload.sessions) { session in
+                            Button { select(session) } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(session.subtitle).font(.caption)
+                                        Text("\(DisplayFormat.memory(session.memory)) · \(DisplayFormat.percent(session.cpu)) CPU").font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }.padding(10).contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                        }
+                    }
+                }
+                if review != nil {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Close \(workload.name)?").font(.headline)
                         Text(workload.appIdentity != nil ? "Spare will ask this app to quit normally. Save any work first." :
                             "Spare will ask these \(workload.processes.count) processes to stop. Running agent tasks or unsaved in-memory work may be interrupted. Nothing is force-killed.")
                         HStack {
-                            Button("Cancel") { reviewing = false }
+                            Button("Cancel") { review = nil }
                             Spacer()
                             Button(workload.appIdentity != nil ? "Request quit" : "Stop these processes", role: .destructive) {
                                 monitor.stop(workload)
                                 back()
-                            }.buttonStyle(.borderedProminent).tint(.orange)
+                            }.buttonStyle(.borderedProminent).tint(.orange).disabled(monitor.error != nil)
                         }
                     }.padding(16).background(Color.orange.opacity(0.09), in: RoundedRectangle(cornerRadius: 12))
-                } else if workload.canStop {
-                    Button(workload.appIdentity != nil ? "Review & quit app…" : "Review & stop processes…") { reviewing = true }
+                } else if workload.canStop && latest != nil {
+                    Button(workload.appIdentity != nil ? "Review & quit app…" : "Review & stop processes…") { review = latest }
                         .buttonStyle(.borderedProminent).tint(.green)
                 } else {
-                    Text("Spare doesn’t offer a stop button for this process because it can’t safely identify a user app to close.")
+                    Text(latest == nil ? "There’s nothing to stop in this reading. Return to the list to see what’s running now." : "Spare protects this item from stop requests. You can inspect its technical details below.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if let path = workload.appPath {

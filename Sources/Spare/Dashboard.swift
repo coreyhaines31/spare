@@ -34,7 +34,7 @@ struct Dashboard: View {
             }.padding(20)
             Divider()
             if let selection {
-                WorkloadDetail(workload: selection, monitor: monitor, back: { self.selection = nil })
+                WorkloadDetail(selection: selection, monitor: monitor, back: { self.selection = nil }, select: { self.selection = $0 }).id(selection.id)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
