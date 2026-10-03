@@ -118,4 +118,25 @@ final class MonitorTests: XCTestCase {
         XCTAssertEqual(groups.first(where: { $0.kind == .development })?.memory, 400)
     }
 
+    func testSuggestionUsesRelevantResourceAndRespectsProtectedTasks() throws {
+        let records = [
+            ProcessRecord(pid: 40, name: "node", path: "/usr/local/bin/node", directory: "/work/memory", memory: 900, cpu: 2),
+            ProcessRecord(pid: 41, name: "node", path: "/usr/local/bin/node", directory: "/work/cpu", memory: 100, cpu: 40, ports: [3456]),
+            ProcessRecord(pid: 42, name: "unknown", path: "/usr/bin/unknown", memory: 9999, cpu: 50)
+        ]
+        let groups = WorkloadGrouper.group(records, apps: [])
+        XCTAssertNil(ReviewSuggestion.make(workloads: groups, samples: [SystemSample(pressure: .normal)], ready: true))
+        let memory = ReviewSuggestion.make(workloads: groups, samples: [SystemSample(pressure: .warning)], ready: true)
+        XCTAssertEqual(memory?.workload.name, "memory")
+        let now = Date()
+        let highCPU = (0..<7).map { SystemSample(date: now.addingTimeInterval(Double($0) * 3), cpu: 95, pressure: .normal) }
+        XCTAssertEqual(ReviewSuggestion.make(workloads: groups, samples: highCPU, ready: true)?.workload.name, "cpu")
+        XCTAssertNil(ReviewSuggestion.make(workloads: groups, samples: highCPU, ready: false))
+        let server = try XCTUnwrap(groups.first(where: { $0.name == "cpu" }))
+        XCTAssertTrue(server.matches("CPU 3456"))
+        XCTAssertFalse(server.matches("CPU 9999"))
+        XCTAssertTrue(WorkloadFilter.projects.includes(server))
+        XCTAssertFalse(WorkloadFilter.agents.includes(server))
+    }
+
 }

@@ -7,10 +7,10 @@ struct Dashboard: View {
     @State private var query = ""
     @State private var sortCPU = false
     @State private var includeBackground = false
+    @State private var filter = WorkloadFilter.all
     private var visible: [Workload] {
         monitor.workloads.filter {
-            (includeBackground || $0.kind != .background) &&
-            (query.isEmpty || ($0.name + " " + ($0.projectPath ?? "")).localizedCaseInsensitiveContains(query))
+            (includeBackground || $0.kind != .background) && filter.includes($0) && $0.matches(query)
         }.sorted { sortCPU ? $0.cpu > $1.cpu : $0.memory > $1.memory }
     }
     var body: some View {
@@ -41,13 +41,25 @@ struct Dashboard: View {
                                     values: monitor.samples.map { $0.physical > 0 ? Double($0.memory) / Double($0.physical) * 100 : 0 })
                             }
                         }
+                        if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Label("A place to start", systemImage: "lightbulb").font(.headline)
+                                Text(suggestion.explanation).font(.system(size: 12)).foregroundStyle(.secondary)
+                                Button("Review \(suggestion.workload.name)") { selection = suggestion.workload }
+                                    .buttonStyle(.bordered)
+                            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                                .background(Color.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                        }
                         HStack {
                             Text("Using the most").font(.headline)
                             Spacer()
                             Picker("Sort", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
                                 .pickerStyle(.segmented).frame(width: 145)
                         }
-                        TextField("Find an app or project", text: $query).textFieldStyle(.roundedBorder)
+                        Picker("Show", selection: $filter) {
+                            ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                        }.pickerStyle(.segmented)
+                        TextField("Find an app, project, or port", text: $query).textFieldStyle(.roundedBorder)
                         LazyVStack(spacing: 4) {
                             ForEach(visible) { workload in
                                 Button { selection = workload } label: {
