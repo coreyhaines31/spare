@@ -36,6 +36,7 @@ final class Monitor: ObservableObject {
     private var timer: Timer?
     private var lastAlert = Date.distantPast
     private var busy = false
+    private var pendingStop: (name: String, tracker: StopFollowUp)?
     var onUpdate: ((Health) -> Void)?
     var health: Health { Health(samples: samples, ready: ready) }
 
@@ -66,6 +67,7 @@ final class Monitor: ObservableObject {
                 }
                 error = nil
                 workloads = grouped
+                checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
                 samples.append(snapshot.system)
                 if samples.count > 300 { samples.removeFirst(samples.count - 300) }
@@ -103,6 +105,7 @@ final class Monitor: ObservableObject {
 
     func stop(_ workload: Workload) {
         guard workload.canStop else { return }
+        pendingStop = nil
         if let identity = workload.appIdentity {
             guard spare_matches(identity.pid, identity.started),
                   let app = NSRunningApplication(processIdentifier: identity.pid),
@@ -110,12 +113,35 @@ final class Monitor: ObservableObject {
                 notice = "That app has already closed or restarted. Review its new reading before trying again."
                 return
             }
-            notice = app.terminate() ? "Quit requested for \(workload.name). The app may ask you to save your work." :
-                "\(workload.name) did not accept the quit request. Open the app to close it yourself."
+            if app.terminate() {
+                trackStop(workload.name, identities: [identity])
+                notice = "Quit requested for \(workload.name). Checking whether it closes; it may ask you to save."
+            } else {
+                notice = "\(workload.name) did not accept the quit request. Open the app to close it yourself."
+            }
         } else if workload.kind == .development || workload.kind == .agent {
-            let results = workload.processes.map { spare_stop($0.identity.pid, $0.identity.started) }
-            let sent = results.filter { $0 == 0 }.count
-            notice = "Stop requested for \(sent) of \(results.count) processes. Others may have exited or could not be stopped."
+            let accepted = workload.processes.filter { spare_stop($0.identity.pid, $0.identity.started) == 0 }
+            let sent = accepted.count
+            let total = workload.processes.count
+            if !accepted.isEmpty { trackStop(workload.name, identities: Set(accepted.map(\.identity))) }
+            notice = "Stop requested for \(sent) of \(total) processes. Others may have exited or could not be stopped."
         }
     }
+    private func trackStop(_ name: String, identities: Set<ProcessIdentity>) {
+        pendingStop = (name, StopFollowUp(identities: identities, now: ProcessInfo.processInfo.systemUptime))
+    }
+
+    private func checkStopProgress(_ processes: [ProcessRecord]) {
+        guard let pendingStop else { return }
+        let result = pendingStop.tracker.result(visible: Set(processes.map(\.identity)), now: ProcessInfo.processInfo.systemUptime)
+        switch result {
+        case .waiting: return
+        case .noLongerVisible:
+            notice = "The requested processes for \(pendingStop.name) are no longer detected. Other sessions or restarted tasks may still appear."
+        case .stillRunning(let count):
+            notice = "\(pendingStop.name) still has \(count) requested process(es) running. Check for a save dialog or finish the task in its app. Spare won’t force it to close."
+        }
+        self.pendingStop = nil
+    }
+
 }
