@@ -19,7 +19,7 @@ public extension Workload {
             session.id = "\(id):session:\(identity.pid):\(identity.started)"
             session.processes = records
             let date = Date(timeIntervalSince1970: Double(identity.started) / 1_000_000)
-            session.subtitle = "Started \(date.formatted(date: .abbreviated, time: .shortened)) · \(records.count) processes"
+            session.subtitle = "Started \(date.formatted(date: .abbreviated, time: .standard)) · \(records.count) processes"
             return session
         }.sorted { $0.processes.map(\.identity.started).min() ?? 0 < $1.processes.map(\.identity.started).min() ?? 0 }
     }
