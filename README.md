@@ -14,7 +14,9 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 - Agent-owned runtime processes stay with the agent; independent development servers remain separate.
 - Explanations of what an app or project does and what closing it affects.
 - Listening TCP ports for recognized development processes.
-- Reviewed, graceful app quit and development-process stop requests. No automatic cleanup or force killing.
+- Live detail readings, with a frozen process list when you begin reviewing a stop request.
+- Individual agent and development sessions inside a project, inferred from parent relationships and distinguished by start time.
+- Reviewed, graceful app quit and development-process stop requests, followed by feedback from subsequent readings. No automatic cleanup or force killing.
 - Optional launch at login and a persistent window available from the menu.
 - Menu bar warning indicator; optional notifications after about a minute of sustained pressure, with a ten-minute cooldown.
 
@@ -56,9 +58,9 @@ Swift Package Manager, SwiftUI, AppKit, and a small C module using macOS process
 
 CPU percentages use the capacity of your whole Mac, so they differ from Activity Monitor's per-core process percentages. The first measurement needs a second sample. Memory pressure comes from macOS; high RAM or swap usage alone does not trigger a warning. System used memory is an estimate; process physical footprints can overlap and won't sum to the system total. The memory sparkline shows estimated usage, not historical pressure.
 
-Spare reads processes belonging to your user. System totals include other users and macOS. Ownership is inferred from app bundle paths and parent processes. Development project names come from the working directory and nearby project manifests; multiple sessions for one project may appear together. Review the process list before stopping a group. Agent detection is heuristic; tools running behind generic runtimes may appear as development tasks.
+Spare reads processes belonging to your user. System totals include other users and macOS. Ownership is inferred from app bundle paths and parent processes. Development project names come from the working directory and nearby project manifests; multiple sessions for one project appear together. Open the project to review an individual session, or review the whole group. Session boundaries are inferred from visible parent processes; if a parent exits, its remaining tools may appear as a new session. Review the process list before stopping anything. Agent detection is heuristic; tools running behind generic runtimes may appear as development tasks.
 
-Quit requests can be refused or delayed by an app. Development stop sends SIGTERM to the reviewed process identities after rechecking ownership and start time; it does not kill a whole process group or newly created children. A supervisor may restart a stopped service. Unknown background tasks have no stop button. Low CPU never means an agent is finished.
+Quit requests can be refused or delayed by an app. Development stop sends SIGTERM to the reviewed process identities after rechecking ownership and start time; it does not kill a whole process group or newly created children. A supervisor may restart a stopped service. Spare checks accepted stop requests against subsequent process readings, reports when those identities are no longer detected, and reports remaining processes after 15 seconds. Disappearance from the readings is not proof of reclaimed memory or successful saving. Unknown background tasks have no stop button. Low CPU never means an agent is finished.
 
 ## Privacy and limits
 
