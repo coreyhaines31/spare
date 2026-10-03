@@ -35,3 +35,18 @@ public struct Health {
         }
     }
 }
+
+public enum PressureAlert {
+    public static func isSustained(_ samples: [SystemSample]) -> Bool {
+        let recent = Array(samples.suffix(20))
+        guard recent.count == 20, let first = recent.first, let last = recent.last,
+              last.date.timeIntervalSince(first.date) >= 50,
+              last.date.timeIntervalSince(first.date) <= 75 else { return false }
+        guard zip(recent.dropFirst(), recent).allSatisfy({
+            let gap = $0.date.timeIntervalSince($1.date)
+            return gap > 0 && gap <= 6
+        }) else { return false }
+        return recent.allSatisfy { $0.pressure == .warning || $0.pressure == .critical } ||
+            recent.allSatisfy { $0.cpu > 85 }
+    }
+}

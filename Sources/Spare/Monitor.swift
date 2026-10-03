@@ -93,9 +93,7 @@ final class Monitor: ObservableObject {
     private func notifyIfNeeded() {
         guard alerts, health.level > 0, samples.count >= 20,
               Date().timeIntervalSince(lastAlert) > 600 else { return }
-        let recent = Array(samples.suffix(20))
-        guard recent.allSatisfy({ $0.pressure == .warning || $0.pressure == .critical }) ||
-                recent.allSatisfy({ $0.cpu > 85 }) else { return }
+        guard PressureAlert.isSustained(samples) else { return }
         lastAlert = Date()
         let content = UNMutableNotificationContent()
         content.title = health.title

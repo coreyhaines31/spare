@@ -139,4 +139,17 @@ final class MonitorTests: XCTestCase {
         XCTAssertFalse(WorkloadFilter.agents.includes(server))
     }
 
+    func testWarningRequiresUninterruptedRecentPressure() {
+        let now = Date()
+        let samples = (0..<20).map { SystemSample(date: now.addingTimeInterval(Double($0) * 3), pressure: .warning) }
+        XCTAssertTrue(PressureAlert.isSustained(samples))
+        XCTAssertFalse(PressureAlert.isSustained(Array(samples.prefix(19))))
+        var afterSleep = samples
+        afterSleep[19].date = now.addingTimeInterval(600)
+        XCTAssertFalse(PressureAlert.isSustained(afterSleep))
+        var recovered = samples
+        recovered[18].pressure = .normal
+        XCTAssertFalse(PressureAlert.isSustained(recovered))
+    }
+
 }
