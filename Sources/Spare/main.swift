@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.target = self
         item.button?.action = #selector(toggle)
         item.button?.toolTip = "Spare — your Mac at a glance"
-        popover.contentSize = NSSize(width: 470, height: 700)
+        popover.contentSize = NSSize(width: SpareLayout.width, height: SpareLayout.height)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: Dashboard(monitor: monitor))
         monitor.onUpdate = { [weak self] health in
@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showWindow() {
         popover.performClose(nil)
         if window == nil {
-            let created = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 700),
+            let created = NSWindow(contentRect: NSRect(x: 0, y: 0, width: SpareLayout.width, height: SpareLayout.height),
                                    styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
             created.title = "Spare"
             created.contentView = NSHostingView(rootView: Dashboard(monitor: monitor))

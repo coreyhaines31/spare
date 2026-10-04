@@ -32,7 +32,7 @@ struct Dashboard: View {
             if let selection = path.last {
                 WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
             } else if showingActivity {
-                ActivityView(monitor: monitor, back: goBack, select: { path.append($0) })
+                ActivityView(monitor: monitor, select: { path.append($0) })
             } else {
                 overview
             }
@@ -100,7 +100,7 @@ struct Dashboard: View {
         VStack(spacing: 0) {
             ResourceSummary(monitor: monitor)
             if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
-                suggestionRow(suggestion.workload, subtitle: "Largest resource user to review", symbol: "exclamationmark.circle")
+                suggestionRow(suggestion.workload, subtitle: suggestionSubtitle(suggestion.workload), symbol: "exclamationmark.circle")
             } else if let growing, let trend = monitor.memoryTrends[growing.id] {
                 suggestionRow(growing, subtitle: trend.summary, symbol: "chart.line.uptrend.xyaxis")
             }
@@ -144,6 +144,11 @@ struct Dashboard: View {
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
             }.contentShape(Rectangle()).padding(.horizontal, 16).padding(.bottom, 12)
         }.buttonStyle(.plain).help("Review current readings for \(workload.name)")
+    }
+    private func suggestionSubtitle(_ workload: Workload) -> String {
+        let pressure = monitor.samples.last?.pressure
+        let resource = pressure == .warning || pressure == .critical ? "\(DisplayFormat.memory(workload.memory)) memory" : "\(DisplayFormat.percent(workload.cpu)) CPU"
+        return "\(resource) · Review before closing"
     }
     private func goBack() {
         if !path.isEmpty { path.removeLast() } else { showingActivity = false }

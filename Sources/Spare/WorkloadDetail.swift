@@ -11,12 +11,11 @@ struct WorkloadDetail: View {
     private var workload: Workload { review ?? latest ?? selection }
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Button(action: back) { Label("All apps & projects", systemImage: "chevron.left") }.buttonStyle(.plain).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
                     WorkloadIcon(workload: workload)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(workload.name).font(.title2.bold()).textSelection(.enabled)
+                        Text(workload.name).font(.title2.weight(.semibold)).textSelection(.enabled)
                         Text(workload.subtitle).font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -24,24 +23,22 @@ struct WorkloadDetail: View {
                     Label(DisplayFormat.memory(workload.memory), systemImage: "memorychip")
                     Spacer()
                     Label("\(DisplayFormat.percent(workload.cpu)) CPU", systemImage: "cpu")
-                }.font(.headline).padding(14).background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+                }.font(.body).padding(.vertical, 10)
+                Divider()
                 Text(review != nil ? "Reviewing a fixed set of processes. New processes won’t be included." : latest == nil ? "This item is no longer detected. Readings below are its last captured values." : "Live readings · Updated every 3 seconds").font(.caption).foregroundStyle(.secondary)
-                if review == nil, let trend = monitor.memoryTrends[selection.id] {
-                    MemoryTrendView(trend: trend)
-                }
-                section("What is this?", workload.explanation)
+                section("About", workload.explanation)
                 if let path = workload.projectPath {
                     section("Project", DisplayFormat.homePath(path))
-                    Button("Show project in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }
+                    Button("Show in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }.buttonStyle(.link)
                 }
                 if !workload.ports.isEmpty {
                     section("Local server ports", workload.ports.map(String.init).joined(separator: ", ") + " · Listening on this Mac")
                 }
-                section("What happens if I close it?", workload.consequence)
+                section("Before closing", workload.consequence)
                 if review == nil && workload.sessions.count > 1 {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Individual sessions").font(.headline)
-                        Text("Review one session to leave the others running.").font(.caption).foregroundStyle(.secondary)
+                        Text("Sessions").font(.headline)
+                        Text("Choose one session to leave the others running.").font(.caption).foregroundStyle(.secondary)
                         ForEach(workload.sessions) { session in
                             Button { select(session) } label: {
                                 HStack {
@@ -58,27 +55,30 @@ struct WorkloadDetail: View {
                 }
                 if review != nil {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Close \(workload.name)?").font(.headline)
+                        Text(workload.appIdentity != nil ? "Quit \(workload.name)?" : "Stop these tasks?").font(.headline)
                         Text(workload.appIdentity != nil ? "Spare will ask this app to quit normally. Save any work first." :
                             "Spare will ask these \(workload.processes.count) processes to stop. Running agent tasks or unsaved in-memory work may be interrupted. Nothing is force-killed.")
                         HStack {
-                            Button("Cancel") { review = nil }
+                            Button("Cancel") { review = nil }.keyboardShortcut(.cancelAction)
                             Spacer()
-                            Button(workload.appIdentity != nil ? "Request quit" : "Stop these processes", role: .destructive) {
+                            Button(workload.appIdentity != nil ? "Quit app" : "Stop tasks", role: .destructive) {
                                 monitor.stop(workload)
                                 back()
-                            }.buttonStyle(.borderedProminent).tint(.orange).disabled(monitor.error != nil)
+                            }.buttonStyle(.borderedProminent).tint(.red).disabled(monitor.error != nil)
                         }
-                    }.padding(16).background(Color.orange.opacity(0.09), in: RoundedRectangle(cornerRadius: 12))
+                    }.padding(12).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
                 } else if workload.canStop && latest != nil {
-                    Button(workload.appIdentity != nil ? "Review & quit app…" : "Review & stop processes…") { review = latest }
-                        .buttonStyle(.borderedProminent).tint(.green)
+                    Button(workload.appIdentity != nil ? "Review quit…" : workload.sessions.count > 1 ? "Review all sessions…" : "Review stop…") { review = latest }
+                        .buttonStyle(.bordered)
                 } else {
                     Text(latest == nil ? "There’s nothing to stop in this reading. Return to the list to see what’s running now." : "Spare protects this item from stop requests. You can inspect its technical details below.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if let path = workload.appPath {
                     Button("Open app") { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
+                }
+                if review == nil, let trend = monitor.memoryTrends[selection.id] {
+                    DisclosureGroup("Memory history") { MemoryTrendView(trend: trend).padding(.top, 8) }
                 }
                 DisclosureGroup("Technical details · \(workload.processes.count) processes") {
                     VStack(alignment: .leading, spacing: 12) {
@@ -91,7 +91,7 @@ struct WorkloadDetail: View {
                         }
                     }.padding(.top, 10)
                 }
-            }.padding(20)
+            }.padding(16)
         }
     }
     private func section(_ heading: String, _ text: String) -> some View {

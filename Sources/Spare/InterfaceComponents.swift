@@ -77,7 +77,7 @@ struct ResourceSummary: View {
                 HStack {
                     metric("CPU", monitor.ready ? DisplayFormat.percent(sample.cpu) : "—", "of total processing power")
                     Divider().frame(height: 35)
-                    metric("Memory", monitor.error != nil ? "Unavailable" : sample.pressure.rawValue.capitalized,
+                    metric("Memory pressure", monitor.error != nil ? "Unavailable" : sample.pressure.rawValue.capitalized,
                            "\(DisplayFormat.memory(sample.memory)) of \(DisplayFormat.memory(sample.physical)) used")
                 }
             }

@@ -3,20 +3,17 @@ import SpareCore
 
 struct ActivityView: View {
     @ObservedObject var monitor: Monitor
-    let back: () -> Void
     let select: (Workload) -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Button(action: back) { Label("Live overview", systemImage: "chevron.left") }
-                    .buttonStyle(.plain).foregroundStyle(.secondary)
                 HStack {
-                    Text("Recent activity").font(.system(size: 25, weight: .semibold, design: .rounded))
+                    Text("Past 15 minutes").font(.subheadline).foregroundStyle(.secondary)
                     Spacer()
-                    Button("Clear") { monitor.clearActivity() }.disabled(monitor.activity.isEmpty)
+                    Button("Clear") { monitor.clearActivity() }.controlSize(.small).disabled(monitor.activity.isEmpty)
                 }
-                Text("The last 15 minutes, kept only in memory. Entries show what Spare observed; they don’t prove why your Mac slowed down.")
+                Text("Observed changes, kept on this Mac until you quit Spare. Resource use alone doesn’t explain a slowdown.")
                     .font(.system(size: 12)).foregroundStyle(.secondary)
                 if monitor.activity.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
@@ -24,13 +21,13 @@ struct ActivityView: View {
                         Text("Pressure changes and recoveries will appear here as Spare monitors your Mac.")
                             .font(.system(size: 13)).foregroundStyle(.secondary)
                     }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 14))
+
                 }
                 ForEach(monitor.activity) { event in
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: event.level > 0 ? "exclamationmark.circle" : "clock")
-                                .foregroundStyle(event.level > 0 ? Color.orange : Color.green)
+                                .foregroundStyle(event.level > 0 ? Color.orange : Color.secondary)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(event.title).font(.headline)
                                 Text(event.date, format: .dateTime.hour().minute().second()).font(.caption).foregroundStyle(.secondary)
@@ -50,10 +47,10 @@ struct ActivityView: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                         }
-                    }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 14))
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                    Divider()
                 }
-            }.padding(20)
+            }.padding(16)
         }
     }
 }
