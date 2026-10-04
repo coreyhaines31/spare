@@ -6,6 +6,8 @@ import UserNotifications
 import ServiceManagement
 
 final class Monitor: ObservableObject {
+    @Published var activity: [ActivityEvent] = []
+    private let history = ActivityHistory()
     @Published var workloads: [Workload] = []
     @Published var samples: [SystemSample] = []
     @Published var ready = false
@@ -62,6 +64,8 @@ final class Monitor: ObservableObject {
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
+                    history.pause(at: Date())
+                    activity = history.events
                     onUpdate?(health)
                     return
                 }
@@ -71,10 +75,17 @@ final class Monitor: ObservableObject {
                 ready = snapshot.ready
                 samples.append(snapshot.system)
                 if samples.count > 300 { samples.removeFirst(samples.count - 300) }
+                history.record(samples: samples, workloads: grouped, ready: ready)
+                activity = history.events
                 onUpdate?(health)
                 notifyIfNeeded()
             }
         }
+    }
+
+    func clearActivity() {
+        history.clear()
+        activity = []
     }
 
     func setAlerts(_ enabled: Bool) {

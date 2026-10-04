@@ -5,6 +5,7 @@ import ServiceManagement
 struct Dashboard: View {
     @ObservedObject var monitor: Monitor
     @State private var selection: Workload?
+    @State private var showingActivity = false
     @State private var query = ""
     @State private var sortCPU = false
     @State private var includeBackground = false
@@ -20,6 +21,11 @@ struct Dashboard: View {
                 Image(systemName: "leaf.fill").foregroundStyle(.green)
                 Text("Spare").font(.system(size: 19, weight: .semibold, design: .rounded))
                 Spacer()
+                Button {
+                    selection = nil
+                    showingActivity.toggle()
+                } label: { Image(systemName: "clock.arrow.circlepath").font(.title3) }
+                    .buttonStyle(.plain).help("Recent activity").accessibilityLabel("Recent activity")
                 Menu {
                     Button("Open in a window") { monitor.onOpenWindow?() }
                     Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
@@ -35,6 +41,11 @@ struct Dashboard: View {
             Divider()
             if let selection {
                 WorkloadDetail(selection: selection, monitor: monitor, back: { self.selection = nil }, select: { self.selection = $0 }).id(selection.id)
+            } else if showingActivity {
+                ActivityView(monitor: monitor, back: { showingActivity = false }, select: {
+                    showingActivity = false
+                    selection = $0
+                })
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
