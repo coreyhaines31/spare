@@ -7,6 +7,7 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 ## MVP
 
 - Live CPU, memory pressure, estimated memory usage, and short resource histories.
+- Five-minute memory charts for identified workloads and sessions, with a “Growing recently” card for notable increases.
 - A recent-activity timeline with pressure changes, recoveries, monitoring gaps, and snapshots of the largest identified resource users.
 - Apps grouped with their helpers; recognized development tools grouped by working folder or project.
 - Recognition for common local AI tools, including Claude, Codex, Ollama, Aider, and OpenCode.
@@ -63,9 +64,11 @@ Spare reads processes belonging to your user. System totals include other users 
 
 Quit requests can be refused or delayed by an app. Development stop sends SIGTERM to the reviewed process identities after rechecking ownership and start time; it does not kill a whole process group or newly created children. A supervisor may restart a stopped service. Spare checks accepted stop requests against subsequent process readings, reports when those identities are no longer detected, and reports remaining processes after 15 seconds. Disappearance from the readings is not proof of reclaimed memory or successful saving. Unknown background tasks have no stop button. Low CPU never means an agent is finished.
 
+Growth highlights require at least 60 seconds of continuous readings and a net increase of both 256 MB and 25%. Growth may be normal. Charts use a labeled scale and reset after monitoring gaps, app restarts, or complete process replacement. Changes to the group’s helpers or sessions are disclosed. Trends are limited to 256 groups/sessions and 101 points each, prioritized by current memory use.
+
 ## Privacy and limits
 
-All monitoring stays on your Mac. No account, telemetry, cloud service, network requests, command-line arguments, environment variables, or tab contents are collected. The last 15 minutes of system samples and up to 80 recent activity entries are held in memory only. Activity entries retain at most three contributor names and their resource totals. They expire after 15 minutes, disappear when Spare quits, and can be cleared with the timeline’s Clear button. Notification preference is saved locally.
+All monitoring stays on your Mac. No account, telemetry, cloud service, network requests, command-line arguments, environment variables, or tab contents are collected. The last 15 minutes of system samples and up to 80 recent activity entries are held in memory only. Activity entries retain at most three contributor names and their resource totals. They expire after 15 minutes, disappear when Spare quits, and can be cleared with the timeline’s Clear button. Memory trends are also held only in memory, for up to five minutes, and discarded when a tracked workload disappears. Notification preference is saved locally.
 
 This MVP cannot identify individual browser tabs, inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Signed updates and richer attribution are future work. Review suggestions identify measured resource use; they do not prove that a workload is causing a slowdown or that it is safe to interrupt.
 
