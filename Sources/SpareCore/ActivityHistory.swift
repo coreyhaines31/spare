@@ -53,8 +53,8 @@ public final class ActivityHistory {
         state = next
         let recovering = next == "normal" && previous != nil && previous != "unknown"
         if next == "normal" || next == "unknown" {
-            append(sample.date, recovering ? "Pressure eased" : next == "unknown" ? "Memory pressure unavailable" : "Monitoring started",
-                   recovering ? "CPU load and memory pressure have stayed below the warning thresholds for 30 seconds." : health.message, level: 0)
+            append(sample.date, recovering ? "Pressure eased" : next == "unknown" ? "Memory pressure unavailable" : previous == "unknown" ? "Memory pressure available" : "Monitoring started",
+                   recovering ? "No sustained CPU warning or elevated memory pressure has been detected for 30 seconds." : health.message, level: 0)
             return
         }
         let memoryConcern = next == "warning" || next == "critical"

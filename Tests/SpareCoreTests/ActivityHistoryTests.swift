@@ -54,4 +54,23 @@ final class ActivityHistoryTests: XCTestCase {
         XCTAssertEqual(history.events.first?.items.map(\.name), ["api"])
         XCTAssertEqual(history.events.first?.items.first?.memory, 200)
     }
+    func testSustainedCPUEventsUseCPUOrdering() {
+        let history = ActivityHistory()
+        let workloads = WorkloadGrouper.group([
+            ProcessRecord(pid: 20, name: "node", path: "/bin/node", directory: "/work/cpu", memory: 100, cpu: 60),
+            ProcessRecord(pid: 21, name: "node", path: "/bin/node", directory: "/work/memory", memory: 900, cpu: 2)
+        ], apps: [])
+        let samples = (0..<7).map { SystemSample(date: start.addingTimeInterval(Double($0) * 3), cpu: 95, pressure: .normal) }
+        history.record(samples: samples, workloads: workloads, ready: true)
+        XCTAssertEqual(history.events.first?.items.first?.name, "cpu")
+        XCTAssertEqual(history.events.first?.level, 1)
+    }
+
+    func testEventCountIsBoundedDuringRepeatedChanges() {
+        let history = ActivityHistory()
+        for index in 0..<100 { record(history, Double(index) * 3, index.isMultiple(of: 2) ? .warning : .critical) }
+        XCTAssertEqual(history.events.count, 80)
+        XCTAssertEqual(history.events.first?.date, start.addingTimeInterval(297))
+    }
+
 }
