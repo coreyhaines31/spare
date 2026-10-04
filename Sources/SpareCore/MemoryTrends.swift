@@ -38,7 +38,9 @@ public final class MemoryTrendTracker {
     public func record(_ workloads: [Workload], at date: Date, ready: Bool) -> [String: MemoryTrend] {
         guard ready else { reset(); return [:] }
         let identified = workloads.filter { $0.kind != .background }
-        let tracked = (identified + identified.flatMap(\.sessions)).sorted { $0.memory > $1.memory }.prefix(256)
+        let tracked = (identified + identified.flatMap(\.sessions)).sorted {
+            $0.memory == $1.memory ? $0.id < $1.id : $0.memory > $1.memory
+        }.prefix(256)
         let ids = Set(tracked.map(\.id))
         series = series.filter { ids.contains($0.key) }
         for workload in tracked {
