@@ -4,8 +4,9 @@ import ServiceManagement
 
 struct Dashboard: View {
     @ObservedObject var monitor: Monitor
-    @State private var selection: Workload?
+    @State private var path: [Workload] = []
     @State private var showingActivity = false
+    @State private var showingHelp = false
     @State private var query = ""
     @State private var sortCPU = false
     @State private var includeBackground = false
@@ -13,7 +14,11 @@ struct Dashboard: View {
     private var visible: [Workload] {
         monitor.workloads.filter {
             (includeBackground || $0.kind != .background) && filter.includes($0) && $0.matches(query)
-        }.sorted { sortCPU ? $0.cpu > $1.cpu : $0.memory > $1.memory }
+        }.sorted {
+            let left = sortCPU ? $0.cpu : Double($0.memory)
+            let right = sortCPU ? $1.cpu : Double($1.memory)
+            return left == right ? $0.id < $1.id : left > right
+        }
     }
     private var growing: Workload? {
         monitor.workloads.filter { monitor.memoryTrends[$0.id]?.isGrowing == true }.max {
@@ -22,128 +27,128 @@ struct Dashboard: View {
     }
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "leaf.fill").foregroundStyle(.green)
-                Text("Spare").font(.system(size: 19, weight: .semibold, design: .rounded))
-                Spacer()
-                Button {
-                    selection = nil
-                    showingActivity.toggle()
-                } label: { Image(systemName: "clock.arrow.circlepath").font(.title3) }
-                    .buttonStyle(.plain).help("Recent activity").accessibilityLabel("Recent activity")
-                Menu {
-                    Button("Open in a window") { monitor.onOpenWindow?() }
-                    Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
-                    if monitor.loginStatus == .requiresApproval {
-                        Button("Approve in Login Items…") { SMAppService.openSystemSettingsLoginItems() }
-                    }
-                    Toggle("Warn me about sustained pressure", isOn: Binding(get: { monitor.alerts }, set: monitor.setAlerts))
-                    Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
-                    Divider()
-                    Button("Quit Spare") { NSApplication.shared.terminate(nil) }
-                } label: { Image(systemName: "ellipsis.circle").font(.title3) }.menuStyle(.borderlessButton).frame(width: 28)
-            }.padding(20)
+            toolbar
             Divider()
-            if let selection {
-                WorkloadDetail(selection: selection, monitor: monitor, back: { self.selection = nil }, select: { self.selection = $0 }).id(selection.id)
+            if let selection = path.last {
+                WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
             } else if showingActivity {
-                ActivityView(monitor: monitor, back: { showingActivity = false }, select: {
-                    showingActivity = false
-                    selection = $0
-                })
+                ActivityView(monitor: monitor, back: goBack, select: { path.append($0) })
             } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        healthCard
-                        if let sample = monitor.samples.last {
-                            HStack(spacing: 12) {
-                                metric("Processing power", value: monitor.ready ? DisplayFormat.percent(sample.cpu) : "…", caption: "of your whole Mac", values: monitor.samples.map(\.cpu))
-                                metric("Memory pressure", value: sample.pressure.rawValue.capitalized,
-                                    caption: "\(DisplayFormat.memory(sample.memory)) of \(DisplayFormat.memory(sample.physical)) used",
-                                    values: monitor.samples.map { $0.physical > 0 ? Double($0.memory) / Double($0.physical) * 100 : 0 })
-                            }
-                        }
-                        if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Label("A place to start", systemImage: "lightbulb").font(.headline)
-                                Text(suggestion.explanation).font(.system(size: 12)).foregroundStyle(.secondary)
-                                Button("Review \(suggestion.workload.name)") { selection = suggestion.workload }
-                                    .buttonStyle(.bordered)
-                            }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
-                                .background(Color.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
-                        }
-                        if let growing, let trend = monitor.memoryTrends[growing.id] {
-                            GrowingWorkloadView(workload: growing, trend: trend) { selection = growing }
-                        }
-                        HStack {
-                            Text("Using the most").font(.headline)
-                            Spacer()
-                            Picker("Sort", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
-                                .pickerStyle(.segmented).frame(width: 145)
-                        }
-                        Picker("Show", selection: $filter) {
-                            ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                        }.pickerStyle(.segmented)
-                        TextField("Find an app, project, or port", text: $query).textFieldStyle(.roundedBorder)
-                        LazyVStack(spacing: 4) {
-                            ForEach(visible) { workload in
-                                Button { selection = workload } label: {
-                                    HStack(spacing: 12) {
-                                        WorkloadIcon(workload: workload)
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(workload.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                                            Text(workload.subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                                        }
-                                        Spacer(minLength: 8)
-                                        VStack(alignment: .trailing, spacing: 4) {
-                                            Text(sortCPU ? DisplayFormat.percent(workload.cpu) : DisplayFormat.memory(workload.memory)).font(.system(size: 13, weight: .medium)).monospacedDigit()
-                                            Text(sortCPU ? DisplayFormat.memory(workload.memory) : "\(DisplayFormat.percent(workload.cpu)) CPU").font(.system(size: 10)).foregroundStyle(.secondary)
-                                        }
-                                        Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(.tertiary)
-                                    }.padding(10).contentShape(Rectangle())
-                                }.buttonStyle(.plain)
-                                Divider().padding(.leading, 54)
-                            }
-                            if visible.isEmpty { Text(monitor.ready ? "No matching apps or projects." : "Finding your apps and projects…").foregroundStyle(.secondary).padding() }
-                        }
-                        Toggle("Include unidentified background processes", isOn: $includeBackground).font(.caption)
-                        Text("App totals include their helpers. CPU is a share of your entire Mac. Memory totals are estimates and won’t add up exactly to system usage.")
-                            .font(.system(size: 11)).foregroundStyle(.secondary)
-                    }.padding(20)
-                }
+                overview
             }
             if let notice = monitor.notice {
-                HStack { Text(notice).font(.caption); Spacer(); Button("Dismiss") { monitor.notice = nil } }.padding(12).background(.quaternary)
+                Divider()
+                HStack(alignment: .top) {
+                    Text(notice).font(.callout).fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Button { monitor.notice = nil } label: { Image(systemName: "xmark") }
+                        .buttonStyle(.borderless).help("Dismiss message").accessibilityLabel("Dismiss message")
+                }.padding(12)
             }
             Divider()
-            HStack {
+            HStack(spacing: 6) {
                 Circle().fill(monitor.error == nil ? Color.green : Color.orange).frame(width: 5, height: 5)
-                Text(monitor.error ?? "On this Mac only · Updates every 3 seconds").font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(monitor.error == nil ? "Live · On this Mac only" : "Reconnecting…").font(.caption).foregroundStyle(.secondary)
                 Spacer()
-            }.padding(12)
-        }.frame(width: 470, height: 700).background(Color(nsColor: .windowBackgroundColor))
+                Button("About these readings") { showingHelp = true }.buttonStyle(.link).font(.caption)
+                    .popover(isPresented: $showingHelp) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("About these readings").font(.headline)
+                            Text("Updated every 3 seconds. App totals include their helpers. CPU is a share of your entire Mac. Memory estimates may overlap and won’t add up to the system total.")
+                            Text("Memory pressure describes how hard macOS is working to make room. Lots of used memory can be normal.")
+                        }.font(.callout).padding(16).frame(width: 300)
+                    }
+            }.padding(.horizontal, 14).padding(.vertical, 10)
+        }.font(.body).frame(width: SpareLayout.width, height: SpareLayout.height)
+            .background(Color(nsColor: .windowBackgroundColor))
     }
-    private var healthCard: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack {
-                Image(systemName: monitor.health.level == 0 ? "leaf" : "exclamationmark.circle")
-                Text(monitor.health.level == 0 ? "YOUR MAC, AT A GLANCE" : "WORTH A LOOK").font(.system(size: 10, weight: .semibold)).tracking(1)
-            }.foregroundStyle(monitor.health.level == 0 ? Color.green : Color.orange)
-            Text(monitor.health.title).font(.system(size: 25, weight: .semibold, design: .rounded))
-            Text(monitor.health.message).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
-            .background((monitor.health.level == 0 ? Color.green : Color.orange).opacity(0.07), in: RoundedRectangle(cornerRadius: 16))
+    private var toolbar: some View {
+        HStack(spacing: 10) {
+            if !path.isEmpty || showingActivity {
+                Button(action: goBack) { Image(systemName: "chevron.left") }
+                    .buttonStyle(.borderless).help("Back").accessibilityLabel("Back").keyboardShortcut("[", modifiers: .command)
+            } else {
+                Image(systemName: "leaf").foregroundStyle(.secondary)
+            }
+            Text(path.isEmpty ? (showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
+            Spacer()
+            Button {
+                path.removeAll()
+                showingActivity.toggle()
+            } label: { Image(systemName: "clock.arrow.circlepath") }
+                .buttonStyle(.borderless).help("Recent activity").accessibilityLabel("Recent activity")
+            Menu {
+                Button("Open in a window") { monitor.onOpenWindow?() }
+                Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
+                if monitor.loginStatus == .requiresApproval {
+                    Button("Approve in Login Items…") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                Toggle("Warn about sustained pressure", isOn: Binding(get: { monitor.alerts }, set: monitor.setAlerts))
+                Toggle("Show unidentified processes", isOn: Binding(get: { includeBackground }, set: {
+                    includeBackground = $0
+                    if $0 { filter = .all }
+                }))
+                Divider()
+                Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
+                Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
+            } label: { Image(systemName: "gearshape") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 20)
+                .help("Settings").accessibilityLabel("Settings")
+        }.padding(.horizontal, 16).padding(.vertical, 12)
     }
-    private func metric(_ title: String, value: String, caption: String, values: [Double]) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
-            Text(value).font(.system(size: 21, weight: .medium, design: .rounded))
-            Text(caption).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
-            Sparkline(values: Array(values.suffix(60))).frame(height: 23).foregroundStyle(.green.opacity(0.7))
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(13).background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+    private var overview: some View {
+        VStack(spacing: 0) {
+            ResourceSummary(monitor: monitor)
+            if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
+                suggestionRow(suggestion.workload, subtitle: "Largest resource user to review", symbol: "exclamationmark.circle")
+            } else if let growing, let trend = monitor.memoryTrends[growing.id] {
+                suggestionRow(growing, subtitle: trend.summary, symbol: "chart.line.uptrend.xyaxis")
+            }
+            Divider()
+            VStack(spacing: 10) {
+                NativeSearchField(text: $query).frame(height: 24)
+                Picker("Show", selection: $filter) {
+                    ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }.pickerStyle(.segmented).labelsHidden()
+                HStack {
+                    Text("Using the most").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                    Spacer()
+                    Picker("Sort by", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
+                        .pickerStyle(.menu).labelsHidden().frame(width: 105).controlSize(.small)
+                }
+            }.padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 4)
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(visible) { workload in
+                        WorkloadRow(workload: workload, sortCPU: sortCPU) { path.append(workload) }
+                    }
+                    if visible.isEmpty {
+                        VStack(spacing: 8) {
+                            Text(monitor.ready ? "No matching items" : "Finding your apps…").font(.headline)
+                            if monitor.ready { Text("Try a different search or category.").foregroundStyle(.secondary) }
+                        }.frame(maxWidth: .infinity).padding(.vertical, 32)
+                    }
+                }.padding(.horizontal, 8).padding(.bottom, 8)
+            }
+        }
+    }
+    private func suggestionRow(_ workload: Workload, subtitle: String, symbol: String) -> some View {
+        Button { path.append(workload) } label: {
+            HStack(spacing: 10) {
+                Image(systemName: symbol).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
+                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            }.contentShape(Rectangle()).padding(.horizontal, 16).padding(.bottom, 12)
+        }.buttonStyle(.plain).help("Review current readings for \(workload.name)")
+    }
+    private func goBack() {
+        if !path.isEmpty { path.removeLast() } else { showingActivity = false }
     }
 }
-
 struct Sparkline: Shape {
     let values: [Double]
     func path(in rect: CGRect) -> Path {
@@ -162,7 +167,7 @@ struct WorkloadIcon: View {
     var body: some View {
         Group {
             if let path = workload.appPath { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable() }
-            else { Image(systemName: workload.kind.symbol).resizable().scaledToFit().padding(7).foregroundStyle(.green) }
+            else { Image(systemName: workload.kind.symbol).resizable().scaledToFit().padding(7).foregroundStyle(.secondary) }
         }.frame(width: 32, height: 32)
     }
 }
