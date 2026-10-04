@@ -15,6 +15,11 @@ struct Dashboard: View {
             (includeBackground || $0.kind != .background) && filter.includes($0) && $0.matches(query)
         }.sorted { sortCPU ? $0.cpu > $1.cpu : $0.memory > $1.memory }
     }
+    private var growing: Workload? {
+        monitor.workloads.filter { monitor.memoryTrends[$0.id]?.isGrowing == true }.max {
+            (monitor.memoryTrends[$0.id]?.change ?? 0) < (monitor.memoryTrends[$1.id]?.change ?? 0)
+        }
+    }
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -66,6 +71,9 @@ struct Dashboard: View {
                                     .buttonStyle(.bordered)
                             }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
                                 .background(Color.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                        if let growing, let trend = monitor.memoryTrends[growing.id] {
+                            GrowingWorkloadView(workload: growing, trend: trend) { selection = growing }
                         }
                         HStack {
                             Text("Using the most").font(.headline)

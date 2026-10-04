@@ -6,6 +6,8 @@ import UserNotifications
 import ServiceManagement
 
 final class Monitor: ObservableObject {
+    @Published var memoryTrends: [String: MemoryTrend] = [:]
+    private let trendTracker = MemoryTrendTracker()
     @Published var activity: [ActivityEvent] = []
     private let history = ActivityHistory()
     @Published var workloads: [Workload] = []
@@ -64,6 +66,8 @@ final class Monitor: ObservableObject {
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
+                    trendTracker.reset()
+                    memoryTrends = [:]
                     history.pause(at: Date())
                     activity = history.events
                     onUpdate?(health)
@@ -73,6 +77,7 @@ final class Monitor: ObservableObject {
                 workloads = grouped
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
+                memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
                 samples.append(snapshot.system)
                 if samples.count > 300 { samples.removeFirst(samples.count - 300) }
                 history.record(samples: samples, workloads: grouped, ready: ready)

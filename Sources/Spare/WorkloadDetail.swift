@@ -26,6 +26,9 @@ struct WorkloadDetail: View {
                     Label("\(DisplayFormat.percent(workload.cpu)) CPU", systemImage: "cpu")
                 }.font(.headline).padding(14).background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
                 Text(review != nil ? "Reviewing a fixed set of processes. New processes won’t be included." : latest == nil ? "This item is no longer detected. Readings below are its last captured values." : "Live readings · Updated every 3 seconds").font(.caption).foregroundStyle(.secondary)
+                if review == nil, let trend = monitor.memoryTrends[selection.id] {
+                    MemoryTrendView(trend: trend)
+                }
                 section("What is this?", workload.explanation)
                 if let path = workload.projectPath {
                     section("Project", DisplayFormat.homePath(path))
