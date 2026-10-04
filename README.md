@@ -31,7 +31,9 @@ make app
 open dist/Spare.app
 ```
 
-Click the leaf in the menu bar to open Spare. Use the clock button beside the menu to see recent activity. Timeline entries capture readings at that moment; **View current** opens the workload’s current readings for review. The menu at the top right offers pressure notifications and Quit Spare. Notifications are off until you enable them. The app starts monitoring immediately. Launch at login is off by default; enable it from the menu if wanted. If macOS requires approval, the menu links to Login Items in System Settings.
+Click the leaf in the menu bar to open Spare. Use the clock button beside the menu to see recent activity. Timeline entries capture readings at that moment; **View current** opens the workload’s current readings for review. The Settings menu at the top right offers pressure notifications, unidentified background processes, and Quit Spare. The overview keeps search and filters above the app list; use Back to return from a session to its project, or from current readings to recent activity. Notifications are off until you enable them. The app starts monitoring immediately. Launch at login is off by default; enable it from the menu if wanted. If macOS requires approval, the menu links to Login Items in System Settings.
+
+Memory history and technical details are collapsed in the detail view. Use **About these readings** in the footer for an explanation of CPU and memory measurements.
 
 For a standalone inspection window:
 
