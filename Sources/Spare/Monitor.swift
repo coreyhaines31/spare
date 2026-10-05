@@ -89,7 +89,7 @@ final class Monitor: ObservableObject {
             DispatchQueue.main.async { [self] in
                 busy = false
                 guard generation == sampleGeneration else { return }
-                awayRecap = latestAway
+                awayRecap = savingHistory ? latestAway : nil
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
@@ -135,7 +135,10 @@ final class Monitor: ObservableObject {
 
     func dismissAwayRecap() {
         awayRecap = nil
-        queue.async { [self] in awayTracker.dismiss() }
+        queue.async { [self] in
+            awayTracker.dismiss()
+            DispatchQueue.main.async { [self] in awayRecap = nil }
+        }
     }
 
     private func publishRecaps() {

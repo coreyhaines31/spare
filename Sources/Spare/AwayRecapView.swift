@@ -25,7 +25,7 @@ struct AwayRecapView: View {
                 HStack {
                     Text(item.name).lineLimit(1)
                     Spacer()
-                    Text(current[item.id] == nil ? "No longer detected" : "Running now")
+                    Text(!monitor.ready || monitor.error != nil ? "Checking status…" : current[item.id] == nil ? "No longer detected" : "Running now")
                         .foregroundStyle(.secondary)
                 }.font(.caption)
             }

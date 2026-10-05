@@ -49,6 +49,26 @@ final class RecapEnhancementTests: XCTestCase {
         sample(tracker, seconds: 372, idle: 0, enabled: false)
         XCTAssertNil(tracker.latest)
     }
+    func testAwaySummaryCrossesMidnightAndExpires() throws {
+        let tracker = AwayRecapTracker()
+        let midnight = Calendar.current.startOfDay(for: start).addingTimeInterval(86400)
+        for second in stride(from: -30.0, through: 30, by: 3) {
+            let now = midnight.addingTimeInterval(second)
+            tracker.record(SystemSample(date: now, cpu: 20, pressure: .normal), workloads: workloads(), idleSeconds: 400 + second, ready: true, enabled: true, now: now)
+        }
+        let returned = midnight.addingTimeInterval(33)
+        tracker.record(SystemSample(date: returned), workloads: [], idleSeconds: 0, ready: true, enabled: true, now: returned)
+        XCTAssertEqual(try XCTUnwrap(tracker.latest).report.totals.observed, 60, accuracy: 0.001)
+        tracker.record(nil, workloads: [], idleSeconds: 0, ready: false, enabled: true, now: returned.addingTimeInterval(19 * 3600))
+        XCTAssertNil(tracker.latest)
+    }
+    func testSamplerResetRequiresANewBaseline() throws {
+        let sampler = Sampler()
+        _ = try XCTUnwrap(sampler.sample())
+        _ = try XCTUnwrap(sampler.sample())
+        sampler.reset()
+        XCTAssertFalse(try XCTUnwrap(sampler.sample()).ready)
+    }
     func testLastSevenDaysAndComparisonDoNotOverlap() {
         let interval = RecapPeriod.lastSevenDays.interval(at: start, calendar: calendar)
         XCTAssertEqual(calendar.component(.day, from: interval.start), 28)
