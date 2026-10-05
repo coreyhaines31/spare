@@ -71,6 +71,10 @@ public struct RecapReport {
 }
 
 public enum RecapFormat {
+    public static func cpu(_ value: Double) -> String {
+        value > 0 && value < 0.1 ? "<0.1%" : String(format: "%.1f%%", value)
+    }
+
     public static func duration(_ seconds: Double) -> String {
         if seconds < 60 { return seconds > 0 ? "less than a minute" : "0 min" }
         let minutes = Int(seconds / 60)

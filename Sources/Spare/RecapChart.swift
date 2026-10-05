@@ -30,7 +30,13 @@ struct RecapChart: View {
                     .accessibilityLabel(point.date.formatted(.dateTime.weekday().hour()))
                     .accessibilityValue("\(DisplayFormat.percent(point.averageCPU)) average CPU; \(RecapFormat.duration(point.observed)) recorded; \(RecapFormat.duration(point.pressureSeconds)) elevated memory pressure")
             }.chartYScale(domain: 0...100)
-                .chartXScale(domain: report.interval.start...max(report.interval.start.addingTimeInterval(3600), report.interval.end))
+                .chartXScale(domain: period.interval(at: report.interval.start, calendar: .current).start...period.interval(at: report.interval.start, calendar: .current).end)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: period == .today ? .hour : .day, count: period == .today ? 6 : 1)) {
+                        AxisGridLine()
+                        AxisValueLabel(format: period == .today ? .dateTime.hour() : .dateTime.weekday(.abbreviated))
+                    }
+                }
                 .chartYAxis { AxisMarks(values: [0, 50, 100]) { value in
                     AxisGridLine()
                     AxisValueLabel { if let number = value.as(Int.self) { Text("\(number)%") } }

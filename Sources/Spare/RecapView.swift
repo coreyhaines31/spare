@@ -97,7 +97,7 @@ struct RecapView: View {
                         Text("\(item.kind.label) · Seen for \(RecapFormat.duration(item.observed))").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 4)
-                    Text(sortCPU ? DisplayFormat.percent(item.cpuSeconds / report.totals.observed) : DisplayFormat.memory(UInt64(item.memoryByteSeconds / report.totals.observed)))
+                    Text(sortCPU ? RecapFormat.cpu(item.cpuSeconds / report.totals.observed) : DisplayFormat.memory(UInt64(item.memoryByteSeconds / report.totals.observed)))
                         .monospacedDigit().font(.body)
                 }
             }
