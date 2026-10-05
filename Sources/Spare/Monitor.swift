@@ -8,6 +8,11 @@ import ServiceManagement
 final class Monitor: ObservableObject {
     @Published var recaps: [RecapPeriod: RecapReport] = [:]
     @Published var recapError: String?
+    @Published var awayRecap: AwayRecap?
+    private let awayTracker = AwayRecapTracker()
+    private var sleeping = false
+    private var sampleGeneration = 0
+    private var sleepObservers: [NSObjectProtocol] = []
     @Published var savingHistory = UserDefaults.standard.object(forKey: "savingHistory") as? Bool ?? true
     private lazy var recapStore = RecapStore(url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("Spare/recaps.json"))
@@ -24,6 +29,7 @@ final class Monitor: ObservableObject {
     @Published var alerts = UserDefaults.standard.bool(forKey: "alerts")
     @Published var loginStatus = SMAppService.mainApp.status
     var onOpenWindow: (() -> Void)?
+    var onOpenRecap: (() -> Void)?
     var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -51,12 +57,17 @@ final class Monitor: ObservableObject {
     var health: Health { Health(samples: samples, ready: ready) }
 
     func start() {
+        let center = NSWorkspace.shared.notificationCenter
+        sleepObservers = [
+            center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(true) },
+            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(false) }
+        ]
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.refresh() }
     }
 
     private func refresh() {
-        guard !busy else { return }
+        guard !busy, !sleeping else { return }
         busy = true
         loginStatus = SMAppService.mainApp.status
         let apps = NSWorkspace.shared.runningApplications.compactMap { app -> AppRecord? in
@@ -65,13 +76,20 @@ final class Monitor: ObservableObject {
                 canQuit: app.activationPolicy == .regular && app.processIdentifier != getpid())
         }
         let saveHistory = savingHistory
+        let generation = sampleGeneration
+        let idle = CGEventType(rawValue: ~0).map { CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: $0) } ?? 0
         queue.async { [self] in
             let snapshot = sampler.sample()
             let grouped = snapshot.map { WorkloadGrouper.group($0.processes, apps: apps, project: resolver.project) }
             recapStore.record(snapshot?.system, workloads: grouped ?? [], ready: snapshot?.ready ?? false, enabled: saveHistory)
+            awayTracker.record(snapshot?.system, workloads: grouped ?? [], idleSeconds: idle, ready: snapshot?.ready ?? false,
+                               enabled: saveHistory, now: Date())
+            let latestAway = awayTracker.latest
             if Date().timeIntervalSince(lastRecapPublish) >= 30 { publishRecaps() }
             DispatchQueue.main.async { [self] in
                 busy = false
+                guard generation == sampleGeneration else { return }
+                awayRecap = latestAway
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
@@ -97,6 +115,29 @@ final class Monitor: ObservableObject {
         }
     }
 
+    private func sleepChanged(_ isSleeping: Bool) {
+        sleeping = isSleeping
+        sampleGeneration += 1
+        ready = false
+        samples = []
+        trendTracker.reset()
+        memoryTrends = [:]
+        history.pause(at: Date())
+        activity = history.events
+        queue.async { [self] in
+            sampler.reset()
+            recapStore.history.pause()
+            awayTracker.pause()
+            if isSleeping { recapStore.save() }
+        }
+        if !isSleeping { refresh() }
+    }
+
+    func dismissAwayRecap() {
+        awayRecap = nil
+        queue.async { [self] in awayTracker.dismiss() }
+    }
+
     private func publishRecaps() {
         let now = Date()
         lastRecapPublish = now
@@ -109,9 +150,11 @@ final class Monitor: ObservableObject {
 
     func setSavingHistory(_ enabled: Bool) {
         savingHistory = enabled
+        if !enabled { awayRecap = nil }
         UserDefaults.standard.set(enabled, forKey: "savingHistory")
         queue.async { [self] in
             recapStore.history.pause()
+            awayTracker.clear()
             recapStore.save()
             publishRecaps()
         }
@@ -119,13 +162,18 @@ final class Monitor: ObservableObject {
 
     func clearRecaps() {
         queue.async { [self] in
-            recapStore.clear()
+            if recapStore.clear() {
+                awayTracker.clear()
+                DispatchQueue.main.async { [self] in awayRecap = nil }
+            }
             publishRecaps()
         }
     }
 
     func stop() {
         timer?.invalidate()
+        for observer in sleepObservers { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+        sleepObservers = []
         queue.sync { recapStore.save() }
     }
 

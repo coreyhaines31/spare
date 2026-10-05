@@ -15,6 +15,8 @@ public final class Sampler {
 
     public init() {}
 
+    public func reset() { previous = [:]; ticks = nil; time = nil }
+
     public func sample() -> Snapshot? {
         var raw = SpareSystem()
         guard spare_system(&raw) else { return nil }
