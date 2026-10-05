@@ -23,14 +23,20 @@ struct RecapChart: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(period == .today ? "CPU by hour" : "CPU by day").font(.headline)
+            HStack {
+                Text(period == .today ? "CPU by hour" : "CPU by day").font(.headline)
+                ContextHelp(title: "CPU chart", text: "Average CPU during recorded time. Orange marks a period that included elevated memory pressure. Missing periods have no bar; partial periods may contain gaps. Bars do not represent how much of the day was monitored.")
+                Spacer()
+                Circle().fill(Color.orange).frame(width: 7, height: 7)
+                Text("Memory pressure observed").font(.caption).foregroundStyle(.secondary)
+            }
             Chart(points) { point in
                 BarMark(x: .value("Time", point.date, unit: period == .today ? .hour : .day), y: .value("Average CPU", point.averageCPU))
                     .foregroundStyle(point.pressureSeconds > 0 ? Color.orange : Color.accentColor)
                     .accessibilityLabel(point.date.formatted(.dateTime.weekday().hour()))
                     .accessibilityValue("\(DisplayFormat.percent(point.averageCPU)) average CPU; \(RecapFormat.duration(point.observed)) recorded; \(RecapFormat.duration(point.pressureSeconds)) elevated memory pressure")
             }.chartYScale(domain: 0...100)
-                .chartXScale(domain: period.interval(at: report.interval.start, calendar: .current).start...period.interval(at: report.interval.start, calendar: .current).end)
+                .chartXScale(domain: period.interval(at: report.interval.end, calendar: .current).start...period.interval(at: report.interval.end, calendar: .current).end)
                 .chartXAxis {
                     AxisMarks(values: .stride(by: period == .today ? .hour : .day, count: period == .today ? 6 : 1)) {
                         AxisGridLine()
@@ -40,9 +46,7 @@ struct RecapChart: View {
                 .chartYAxis { AxisMarks(values: [0, 50, 100]) { value in
                     AxisGridLine()
                     AxisValueLabel { if let number = value.as(Int.self) { Text("\(number)%") } }
-                } }.frame(height: 120)
-            Text("Average CPU during recorded time. Orange marks a period with elevated memory pressure. Missing periods have no bar; partial periods may contain gaps.")
-                .font(.caption).foregroundStyle(.secondary)
+                } }.frame(height: 190)
         }
     }
 }
