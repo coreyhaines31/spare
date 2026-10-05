@@ -8,7 +8,8 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 
 - Live CPU, memory pressure, estimated memory usage, and short resource histories.
 - Five-minute memory charts for identified workloads and sessions, with a “Growing recently” card for notable increases.
-- Daily and weekly recaps with CPU charts, elevated-pressure time, resource rankings, busiest hours, and previous-period comparisons.
+- A dedicated, resizable Recap window with Today, This week, and Last 7 days; CPU charts, pressure time, rankings, comparisons, contextual help, and CSV export.
+- A “While you were away” return summary with observed resource use and which leading workloads are running now.
 - A recent-activity timeline with pressure changes, recoveries, monitoring gaps, and snapshots of the largest identified resource users.
 - Apps grouped with their helpers; recognized development tools grouped by working folder or project.
 - Recognition for common local AI tools, including Claude, Codex, Ollama, Aider, and OpenCode.
@@ -34,7 +35,7 @@ open dist/Spare.app
 
 Click the leaf in the menu bar to open Spare. Use the clock button beside the menu to see recent activity. Timeline entries capture readings at that moment; **View current** opens the workload’s current readings for review. The Settings menu at the top right offers pressure notifications, unidentified background processes, and Quit Spare. The overview keeps search and filters above the app list; use Back to return from a session to its project, or from current readings to recent activity. Notifications are off until you enable them. The app starts monitoring immediately. Launch at login is off by default; enable it from the menu if wanted. If macOS requires approval, the menu links to Login Items in System Settings.
 
-Use the chart button in the toolbar to open **Recap**, then choose **Today** or **This week**. History starts with this version; earlier activity cannot be recovered. The recap updates every 30 seconds. Save-history and clear-history controls are at the bottom of this view.
+Use the chart button in the toolbar to open the larger **Recap** window, then choose **Today**, **This week**, or **Last 7 days**. The Recap window resizes independently from the menu bar overview. Click an info button beside a reading for its definition. **Export CSV…** saves the selected period’s hourly system and workload summaries through the native save dialog. History starts with this version; earlier activity cannot be recovered. The recap updates every 30 seconds. Save-history and clear-history controls are at the bottom of this view.
 
 Memory history and technical details are collapsed in the detail view. Use **About these readings** in the footer for an explanation of CPU and memory measurements.
 
@@ -73,11 +74,17 @@ Growth highlights require at least 60 seconds of continuous readings and a net i
 
 ## Daily and weekly recaps
 
-Recaps retain up to 30 days of compact hourly summaries. CPU averages are time-weighted; “CPU above 85%” measures observed busy time, not necessarily a problem. Memory pressure time uses macOS warning/critical readings; unavailable pressure is shown separately. Charts show recorded hourly averages today or daily averages this week; orange bars mark periods that included elevated memory pressure. The local calendar determines day and week boundaries, including daylight-saving changes.
+Recaps retain up to 30 days of compact hourly summaries. CPU averages are time-weighted; “CPU above 85%” measures observed busy time, not necessarily a problem. Memory pressure time uses macOS warning/critical readings; unavailable pressure is shown separately. Charts show recorded hourly averages today or daily averages this week; orange bars mark periods that included elevated memory pressure. The local calendar determines day and week boundaries, including daylight-saving changes. Last 7 days includes today and the preceding six calendar days; its comparison uses the seven calendar days immediately before that range.
 
 Rankings combine top-level apps/projects/agents with their helpers, without also counting nested sessions. Their averages use all recorded time as the denominator, including time when a workload was absent. Seen/running time does not measure active use. At most 128 workload summaries are retained per hour, so smaller tasks may be omitted. Contributor names describe measured use, not the cause of a slowdown.
 
-Comparisons use average CPU and the proportion of known memory-pressure readings, with recorded duration shown for each period. They appear after both periods have at least a minute of coverage. Sleep, pauses, restarts, and sample gaps over ten seconds are unobserved, never filled as idle time. There is no backfill. Retention is enforced while Spare runs; if it is closed for over 30 days, old summaries are pruned the next time it runs.
+Comparisons use average CPU and the proportion of known memory-pressure readings, with recorded duration shown for each period. They appear after both periods have at least a minute of coverage. Explicit sleep/wake notifications reset the sampler and history baselines, including for short sleeps. Sleep, pauses, restarts, and sample gaps over ten seconds are unobserved, never filled as idle time. There is no backfill. Retention is enforced while Spare runs; if it is closed for over 30 days, old summaries are pruned the next time it runs.
+
+## While you were away
+
+After five minutes without keyboard or mouse input, Spare begins a temporary away summary while history recording is enabled. When input resumes, at least a minute of observed readings produces a return card in the overview and Recap window. It shows recorded and unobserved time, memory-pressure time, the largest recorded users, and which groups are detected now. The first five idle minutes are excluded. Running now does not establish that it is the same session, or that an agent completed productive work.
+
+This uses only macOS’s elapsed-input-idle counter, never keystrokes or mouse contents. Away summaries remain in memory for up to 18 hours; dismissing, pausing history, clearing history, or quitting removes them. Ordinary hourly resource summaries retain the existing 30-day local policy. CSV exports include display names and hourly measurements, but no raw process paths or commands. Names are quoted and spreadsheet formulas neutralized.
 
 ## Privacy and limits
 
