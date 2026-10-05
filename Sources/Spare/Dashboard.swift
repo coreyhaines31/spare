@@ -6,7 +6,6 @@ struct Dashboard: View {
     @ObservedObject var monitor: Monitor
     @State private var path: [Workload] = []
     @State private var showingActivity = false
-    @State private var showingRecap = false
     @State private var showingHelp = false
     @State private var query = ""
     @State private var sortCPU = false
@@ -32,8 +31,6 @@ struct Dashboard: View {
             Divider()
             if let selection = path.last {
                 WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
-            } else if showingRecap {
-                RecapView(monitor: monitor)
             } else if showingActivity {
                 ActivityView(monitor: monitor, select: { path.append($0) })
             } else {
@@ -67,23 +64,18 @@ struct Dashboard: View {
     }
     private var toolbar: some View {
         HStack(spacing: 10) {
-            if !path.isEmpty || showingActivity || showingRecap {
+            if !path.isEmpty || showingActivity {
                 Button(action: goBack) { Image(systemName: "chevron.left") }
                     .buttonStyle(.borderless).help("Back").accessibilityLabel("Back").keyboardShortcut("[", modifiers: .command)
             } else {
                 Image(systemName: "leaf").foregroundStyle(.secondary)
             }
-            Text(path.isEmpty ? (showingRecap ? "Recap" : showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
+            Text(path.isEmpty ? (showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
             Spacer()
-            Button {
-                path.removeAll()
-                showingActivity = false
-                showingRecap.toggle()
-            } label: { Image(systemName: "chart.bar.xaxis") }
+            Button { monitor.onOpenRecap?() } label: { Image(systemName: "chart.bar.xaxis") }
                 .buttonStyle(.borderless).help("Daily and weekly recap").accessibilityLabel("Daily and weekly recap")
             Button {
                 path.removeAll()
-                showingRecap = false
                 showingActivity.toggle()
             } label: { Image(systemName: "clock.arrow.circlepath") }
                 .buttonStyle(.borderless).help("Recent activity").accessibilityLabel("Recent activity")
@@ -109,6 +101,9 @@ struct Dashboard: View {
     private var overview: some View {
         VStack(spacing: 0) {
             ResourceSummary(monitor: monitor)
+            if let recap = monitor.awayRecap {
+                AwayRecapView(recap: recap, monitor: monitor).padding(.horizontal, 16).padding(.bottom, 12)
+            }
             if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
                 suggestionRow(suggestion.workload, subtitle: suggestionSubtitle(suggestion.workload), symbol: "exclamationmark.circle")
             } else if let growing, let trend = monitor.memoryTrends[growing.id] {
@@ -161,7 +156,7 @@ struct Dashboard: View {
         return "\(resource) · Review before closing"
     }
     private func goBack() {
-        if !path.isEmpty { path.removeLast() } else { showingActivity = false; showingRecap = false }
+        if !path.isEmpty { path.removeLast() } else { showingActivity = false }
     }
 }
 struct Sparkline: Shape {

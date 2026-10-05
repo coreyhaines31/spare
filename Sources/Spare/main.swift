@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var item: NSStatusItem!
     private let popover = NSPopover()
     private var window: NSWindow?
+    private var recapWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -24,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         monitor.start()
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
+        monitor.onOpenRecap = { [weak self] in self?.showRecap() }
         if CommandLine.arguments.contains("--window") { showWindow() }
         else { toggle() }
     }
@@ -33,6 +35,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showWindow()
         return true
+    }
+
+    private func showRecap() {
+        popover.performClose(nil)
+        if recapWindow == nil {
+            let created = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 780),
+                                   styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            created.title = "Spare — Recap"
+            created.contentView = NSHostingView(rootView: RecapView(monitor: monitor))
+            created.contentMinSize = NSSize(width: 640, height: 540)
+            created.setFrameAutosaveName("SpareRecap")
+            created.center()
+            created.isReleasedWhenClosed = false
+            recapWindow = created
+        }
+        recapWindow?.deminiaturize(nil)
+        recapWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func showWindow() {
