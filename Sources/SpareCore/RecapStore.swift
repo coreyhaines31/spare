@@ -33,6 +33,7 @@ public final class RecapStore {
     }
     public func save(at date: Date = Date()) {
         guard !blocked else { return }
+        lastSave = date
         do {
             history.prune(at: date)
             try write(history.buckets)

@@ -66,7 +66,7 @@ public final class RecapHistory {
         let previousInterval = period.interval(at: previousDate, calendar: calendar)
         let current = aggregate(interval)
         return RecapReport(interval: interval, totals: current.0, previous: aggregate(previousInterval).0,
-                           workloads: Array(current.1.values), buckets: buckets.filter { $0.start < now && $0.end > full.start })
+                           workloads: Array(current.1.values), buckets: buckets.filter { $0.start < now && $0.end > full.start && ($0.recordedThrough ?? $0.end) <= now })
     }
     private func aggregate(_ interval: DateInterval) -> (RecapTotals, [String: RecapWorkload]) {
         var totals = RecapTotals()
