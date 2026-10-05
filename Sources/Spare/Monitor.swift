@@ -6,6 +6,12 @@ import UserNotifications
 import ServiceManagement
 
 final class Monitor: ObservableObject {
+    @Published var recaps: [RecapPeriod: RecapReport] = [:]
+    @Published var recapError: String?
+    @Published var savingHistory = UserDefaults.standard.object(forKey: "savingHistory") as? Bool ?? true
+    private lazy var recapStore = RecapStore(url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("Spare/recaps.json"))
+    private var lastRecapPublish = Date.distantPast
     @Published var memoryTrends: [String: MemoryTrend] = [:]
     private let trendTracker = MemoryTrendTracker()
     @Published var activity: [ActivityEvent] = []
@@ -58,9 +64,12 @@ final class Monitor: ObservableObject {
             return AppRecord(pid: app.processIdentifier, name: name, path: url.path,
                 canQuit: app.activationPolicy == .regular && app.processIdentifier != getpid())
         }
+        let saveHistory = savingHistory
         queue.async { [self] in
             let snapshot = sampler.sample()
             let grouped = snapshot.map { WorkloadGrouper.group($0.processes, apps: apps, project: resolver.project) }
+            recapStore.record(snapshot?.system, workloads: grouped ?? [], ready: snapshot?.ready ?? false, enabled: saveHistory)
+            if Date().timeIntervalSince(lastRecapPublish) >= 30 { publishRecaps() }
             DispatchQueue.main.async { [self] in
                 busy = false
                 guard let snapshot, let grouped else {
@@ -86,6 +95,38 @@ final class Monitor: ObservableObject {
                 notifyIfNeeded()
             }
         }
+    }
+
+    private func publishRecaps() {
+        let now = Date()
+        lastRecapPublish = now
+        let reports = Dictionary(uniqueKeysWithValues: RecapPeriod.allCases.map { ($0, recapStore.history.report($0, at: now)) })
+        let error = recapStore.error
+        DispatchQueue.main.async { [self] in recaps = reports; recapError = error }
+    }
+
+    func refreshRecaps() { queue.async { [self] in publishRecaps() } }
+
+    func setSavingHistory(_ enabled: Bool) {
+        savingHistory = enabled
+        UserDefaults.standard.set(enabled, forKey: "savingHistory")
+        queue.async { [self] in
+            recapStore.history.pause()
+            recapStore.save()
+            publishRecaps()
+        }
+    }
+
+    func clearRecaps() {
+        queue.async { [self] in
+            recapStore.clear()
+            publishRecaps()
+        }
+    }
+
+    func stop() {
+        timer?.invalidate()
+        queue.sync { recapStore.save() }
     }
 
     func clearActivity() {

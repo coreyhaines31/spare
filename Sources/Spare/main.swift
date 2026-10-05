@@ -28,6 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         else { toggle() }
     }
 
+    func applicationWillTerminate(_ notification: Notification) { monitor.stop() }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showWindow()
         return true
