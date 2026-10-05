@@ -1,9 +1,21 @@
 import Foundation
 
 public enum RecapPeriod: String, CaseIterable {
-    case today = "Today", week = "This week"
+    case today = "Today", week = "This week", lastSevenDays = "Last 7 days"
+    public var comparisonLabel: String {
+        switch self {
+        case .today: return "yesterday"
+        case .week: return "last week"
+        case .lastSevenDays: return "the previous 7 days"
+        }
+    }
     public func interval(at date: Date, calendar: Calendar) -> DateInterval {
-        calendar.dateInterval(of: self == .today ? .day : .weekOfYear, for: date)!
+        if self == .lastSevenDays {
+            let today = calendar.startOfDay(for: date)
+            return DateInterval(start: calendar.date(byAdding: .day, value: -6, to: today)!,
+                                end: calendar.date(byAdding: .day, value: 1, to: today)!)
+        }
+        return calendar.dateInterval(of: self == .today ? .day : .weekOfYear, for: date)!
     }
 }
 

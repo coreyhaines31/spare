@@ -41,7 +41,7 @@ public final class RecapHistory {
     }
     private func recordWorkloads(_ workloads: [Workload], seconds: Double, pressure: MemoryPressure, index: Int) {
         for workload in workloads where workload.kind != .background {
-            let id = SHA256.hash(data: Data(workload.id.utf8)).map { String(format: "%02x", $0) }.joined()
+            let id = Self.workloadID(workload.id)
             var entry = buckets[index].workloads[id] ?? RecapWorkload(id: id, name: String(workload.name.prefix(160)), kind: workload.kind)
             entry.observed += seconds
             entry.cpuSeconds += workload.cpu * seconds
@@ -64,9 +64,17 @@ public final class RecapHistory {
         let interval = DateInterval(start: full.start, end: now)
         let previousDate = full.start.addingTimeInterval(-1)
         let previousInterval = period.interval(at: previousDate, calendar: calendar)
+        return report(in: interval, comparedWith: previousInterval)
+    }
+    public static func workloadID(_ id: String) -> String {
+        SHA256.hash(data: Data(id.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+    public func report(in interval: DateInterval, comparedWith previousInterval: DateInterval? = nil) -> RecapReport {
         let current = aggregate(interval)
-        return RecapReport(interval: interval, totals: current.0, previous: aggregate(previousInterval).0,
-                           workloads: Array(current.1.values), buckets: buckets.filter { $0.start < now && $0.end > full.start && ($0.recordedThrough ?? $0.end) <= now })
+        return RecapReport(interval: interval, totals: current.0, previous: previousInterval.map { aggregate($0).0 } ?? RecapTotals(),
+                           workloads: Array(current.1.values), buckets: buckets.filter {
+            $0.start < interval.end && $0.end > interval.start && ($0.recordedThrough ?? $0.end) <= interval.end
+        })
     }
     private func aggregate(_ interval: DateInterval) -> (RecapTotals, [String: RecapWorkload]) {
         var totals = RecapTotals()
