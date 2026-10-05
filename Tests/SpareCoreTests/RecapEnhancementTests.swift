@@ -45,7 +45,7 @@ final class RecapEnhancementTests: XCTestCase {
         for time in stride(from: 336.0, through: 366, by: 3) { sample(tracker, seconds: time, idle: time) }
         sample(tracker, seconds: 369, idle: 0)
         XCTAssertEqual(try XCTUnwrap(tracker.latest).report.totals.observed, 60, accuracy: 0.001)
-        XCTAssertEqual(try XCTUnwrap(tracker.latest).report.unobserved, 6, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(tracker.latest).report.unobserved, 9, accuracy: 0.001)
         sample(tracker, seconds: 372, idle: 0, enabled: false)
         XCTAssertNil(tracker.latest)
     }

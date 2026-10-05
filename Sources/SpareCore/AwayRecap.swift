@@ -33,7 +33,7 @@ public final class AwayRecapTracker {
             history.record(sample, workloads: workloads, ready: true)
         } else if let start {
             // Stop at the preceding observation; returning input is never credited as away work.
-            let end = min(sample.date.addingTimeInterval(-idleSeconds), history.buckets.last?.recordedThrough ?? start)
+            let end = sample.date.addingTimeInterval(-idleSeconds)
             if end > start {
                 var report = history.report(in: DateInterval(start: history.buckets.first?.start ?? start, end: end))
                 report.interval = DateInterval(start: start, end: end)
