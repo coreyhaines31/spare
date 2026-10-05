@@ -4,6 +4,7 @@
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
@@ -26,7 +27,10 @@ bool spare_process(int pid, SpareProcess *output, bool details) {
     output->started = info.pbi_start_tvsec * 1000000 + info.pbi_start_tvusec;
     struct rusage_info_v2 usage = {0};
     if (proc_pid_rusage(pid, RUSAGE_INFO_V2, (rusage_info_t *)&usage) != 0) return false;
-    output->cpu_ns = usage.ri_user_time + usage.ri_system_time;
+    mach_timebase_info_data_t timebase;
+    if (mach_timebase_info(&timebase) != KERN_SUCCESS || timebase.denom == 0) return false;
+    __uint128_t cpu_ticks = (__uint128_t)usage.ri_user_time + usage.ri_system_time;
+    output->cpu_ns = (uint64_t)(cpu_ticks * timebase.numer / timebase.denom);
     output->memory = usage.ri_phys_footprint;
     proc_name(pid, output->name, sizeof(output->name));
     if (details) {

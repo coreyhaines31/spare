@@ -1,8 +1,9 @@
 import Foundation
+import Darwin
 
 public final class RecapStore {
     private struct Archive: Codable {
-        var version = 1
+        var version = 2
         var buckets: [RecapBucket]
     }
     public let history: RecapHistory
@@ -14,8 +15,18 @@ public final class RecapStore {
         self.url = url
         do {
             if FileManager.default.fileExists(atPath: url.path) {
-                let archive = try JSONDecoder().decode(Archive.self, from: Data(contentsOf: url))
-                guard archive.version == 1 else { throw CocoaError(.fileReadCorruptFile) }
+                var archive = try JSONDecoder().decode(Archive.self, from: Data(contentsOf: url))
+                guard archive.version == 1 || archive.version == 2 else { throw CocoaError(.fileReadCorruptFile) }
+                if archive.version == 1 {
+                    var timebase = mach_timebase_info_data_t()
+                    guard mach_timebase_info(&timebase) == KERN_SUCCESS, timebase.denom > 0 else { throw CocoaError(.fileReadUnknown) }
+                    let scale = Double(timebase.numer) / Double(timebase.denom)
+                    for index in archive.buckets.indices {
+                        for id in Array(archive.buckets[index].workloads.keys) {
+                            archive.buckets[index].workloads[id]?.cpuSeconds *= scale
+                        }
+                    }
+                }
                 history = RecapHistory(buckets: archive.buckets)
                 history.prune(at: now)
             } else { history = RecapHistory() }
