@@ -1,0 +1,52 @@
+import SwiftUI
+import Charts
+import SpareCore
+
+struct RecapChart: View {
+    let report: RecapReport
+    let period: RecapPeriod
+    private struct Point: Identifiable {
+        var date: Date
+        var observed: Double
+        var averageCPU: Double
+        var pressureSeconds: Double
+        var id: Date { date }
+    }
+    private var points: [Point] {
+        let groups = Dictionary(grouping: report.buckets) { period == .today ? $0.start : Calendar.current.startOfDay(for: $0.start) }
+        return groups.map { date, buckets in
+            let observed = buckets.reduce(0) { $0 + $1.totals.observed }
+            return Point(date: date, observed: observed,
+                averageCPU: observed > 0 ? buckets.reduce(0) { $0 + $1.totals.cpuSeconds } / observed : 0,
+                pressureSeconds: buckets.reduce(0) { $0 + $1.totals.pressureSeconds })
+        }.sorted { $0.date < $1.date }
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(period == .today ? "CPU by hour" : "CPU by day").font(.headline)
+                ContextHelp(title: "CPU chart", text: "Average CPU during recorded time. Orange marks a period that included elevated memory pressure. Missing periods have no bar; partial periods may contain gaps. Bars do not represent how much of the day was monitored.")
+                Spacer()
+                Circle().fill(Color.orange).frame(width: 7, height: 7)
+                Text("Memory pressure observed").font(.caption).foregroundStyle(.secondary)
+            }
+            Chart(points) { point in
+                BarMark(x: .value("Time", point.date, unit: period == .today ? .hour : .day), y: .value("Average CPU", point.averageCPU))
+                    .foregroundStyle(point.pressureSeconds > 0 ? Color.orange : Color.accentColor)
+                    .accessibilityLabel(point.date.formatted(.dateTime.weekday().hour()))
+                    .accessibilityValue("\(DisplayFormat.percent(point.averageCPU)) average CPU; \(RecapFormat.duration(point.observed)) recorded; \(RecapFormat.duration(point.pressureSeconds)) elevated memory pressure")
+            }.chartYScale(domain: 0...100)
+                .chartXScale(domain: period.interval(at: report.interval.end, calendar: .current).start...period.interval(at: report.interval.end, calendar: .current).end)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: period == .today ? .hour : .day, count: period == .today ? 6 : 1)) {
+                        AxisGridLine()
+                        AxisValueLabel(format: period == .today ? .dateTime.hour() : .dateTime.weekday(.abbreviated))
+                    }
+                }
+                .chartYAxis { AxisMarks(values: [0, 50, 100]) { value in
+                    AxisGridLine()
+                    AxisValueLabel { if let number = value.as(Int.self) { Text("\(number)%") } }
+                } }.frame(height: 190)
+        }
+    }
+}
