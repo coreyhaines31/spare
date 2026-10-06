@@ -12,4 +12,6 @@
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>CFBundleIconFile</key><string>Spare</string>
+<key>SUFeedURL</key><string>https://github.com/coreyhaines31/spare/releases/latest/download/appcast.xml</string>
+<key>SUPublicEDKey</key><string>+CtCSZ6LuBXCGCXlALCPbYH2qywG2P5XsDdpCyofsiU=</string>
 </dict></plist>
