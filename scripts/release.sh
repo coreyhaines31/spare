@@ -50,4 +50,10 @@ xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 (cd "$RELEASE_DIR" && shasum -a 256 "$(basename "$DMG")" > SHA256SUMS.txt)
-printf 'Release ready: %s\n' "$DMG"
+# Sparkle reads the EdDSA private key from the keychain account named by SPARKLE_ACCOUNT.
+mkdir -p "$RELEASE_DIR/appcast"
+cp "$DMG" "$RELEASE_DIR/appcast/"
+.build/artifacts/sparkle/Sparkle/bin/generate_appcast --account "${SPARKLE_ACCOUNT:-spare}" \
+  --download-url-prefix "https://github.com/coreyhaines31/spare/releases/download/v$VERSION/" \
+  --link https://spareformac.com "$RELEASE_DIR/appcast"
+printf 'Release ready: %s\nAttach %s to the GitHub release\n' "$DMG" "$RELEASE_DIR/appcast/appcast.xml"
