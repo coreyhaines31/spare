@@ -1,7 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+# Needs the full Xcode, even if the shell points DEVELOPER_DIR at the Command Line Tools.
+case "${DEVELOPER_DIR:-}" in
+  ""|*CommandLineTools*) export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ;;
+esac
 : "${TEAM_ID:?Set your Apple Developer team ID}"
 : "${DEVELOPMENT_IDENTITY:?Set your Apple Development signing identity}"
 : "${NOTARY_PROFILE:?Set your notarytool keychain profile}"
