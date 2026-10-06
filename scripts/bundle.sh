@@ -13,5 +13,5 @@ cp Resources/Info.plist dist/Spare.app/Contents/Info.plist
 mkdir -p dist/Spare.iconset
 swift scripts/icon.swift dist/Spare.iconset
 iconutil -c icns dist/Spare.iconset -o dist/Spare.app/Contents/Resources/Spare.icns
-codesign --force --deep --sign - dist/Spare.app
+codesign --force --sign - dist/Spare.app
 printf 'Built %s/dist/Spare.app\n' "$PWD"
