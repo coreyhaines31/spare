@@ -6,7 +6,7 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 
 ## Download
 
-[Download Spare 0.9.0 for Apple silicon](https://github.com/coreyhaines31/spare/releases/download/v0.9.0/Spare-0.9.0-arm64.dmg) · [Website](https://spareformac.com)
+[Download Spare 0.10.0 for Apple silicon](https://github.com/coreyhaines31/spare/releases/download/v0.10.0/Spare-0.10.0-arm64.dmg) · [Website](https://spareformac.com)
 
 Free, MIT licensed, and no account required. Requires macOS 14 or later on an Apple-silicon Mac. Open the DMG, drag Spare into Applications, and launch it. Releases are Developer ID signed and notarized by Apple. From 0.9.0, Spare updates itself through Sparkle; choose **Check for Updates…** in the settings menu to check now. Earlier versions update by downloading the latest release.
 
