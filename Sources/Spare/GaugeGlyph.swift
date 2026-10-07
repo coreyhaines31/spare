@@ -35,7 +35,12 @@ struct GaugeGlyph {
     }
 
     /// A template image sized for the menu bar, tinted by the system like an SF Symbol.
-    static func menuBarImage(elevated: Bool) -> NSImage {
+    static func menuBarImage(elevated: Bool) -> NSImage { elevated ? elevatedImage : normalImage }
+
+    private static let normalImage = makeMenuBarImage(elevated: false)
+    private static let elevatedImage = makeMenuBarImage(elevated: true)
+
+    private static func makeMenuBarImage(elevated: Bool) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { rect in
             GaugeGlyph(elevated: elevated).draw(in: rect)
             return true

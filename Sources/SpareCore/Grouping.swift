@@ -19,7 +19,7 @@ public enum WorkloadGrouper {
                 workload = developerGroup(owner, kind: kind, project: project(owner.directory))
             } else if let app = lineage.compactMap({ appByPID[$0.identity.pid] }).first {
                 workload = appGroup(app, processes: byPID)
-            } else if let entry = SystemProcessCatalog.entry(for: process.name) {
+            } else if let entry = SystemProcessCatalog.entry(for: process) {
                 workload = Workload(id: "system:\(process.name)", name: process.name, subtitle: "macOS · \(entry.category)",
                                     explanation: "\(entry.summary) It’s part of macOS.",
                                     consequence: "Spare doesn’t stop macOS processes. macOS starts and manages them itself.",
