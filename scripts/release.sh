@@ -1,7 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+# Needs the full Xcode, even if the shell points DEVELOPER_DIR at the Command Line Tools.
+case "${DEVELOPER_DIR:-}" in
+  ""|*CommandLineTools*) export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ;;
+esac
 : "${TEAM_ID:?Set your Apple Developer team ID}"
 : "${DEVELOPMENT_IDENTITY:?Set your Apple Development signing identity}"
 : "${NOTARY_PROFILE:?Set your notarytool keychain profile}"
@@ -50,4 +53,10 @@ xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 (cd "$RELEASE_DIR" && shasum -a 256 "$(basename "$DMG")" > SHA256SUMS.txt)
-printf 'Release ready: %s\n' "$DMG"
+# Sparkle reads the EdDSA private key from the keychain account named by SPARKLE_ACCOUNT.
+mkdir -p "$RELEASE_DIR/appcast"
+cp "$DMG" "$RELEASE_DIR/appcast/"
+.build/artifacts/sparkle/Sparkle/bin/generate_appcast --account "${SPARKLE_ACCOUNT:-spare}" \
+  --download-url-prefix "https://github.com/coreyhaines31/spare/releases/download/v$VERSION/" \
+  --link https://spareformac.com "$RELEASE_DIR/appcast"
+printf 'Release ready: %s\nAttach %s to the GitHub release\n' "$DMG" "$RELEASE_DIR/appcast/appcast.xml"

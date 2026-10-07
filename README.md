@@ -6,9 +6,9 @@ Spare is a native macOS menu bar app that turns resource readings into recogniza
 
 ## Download
 
-[Download Spare 0.8.0 for Apple silicon](https://github.com/coreyhaines31/spare/releases/download/v0.8.0/Spare-0.8.0-arm64.dmg) · [Website](https://spare-lime.vercel.app)
+[Download Spare 0.9.0 for Apple silicon](https://github.com/coreyhaines31/spare/releases/download/v0.9.0/Spare-0.9.0-arm64.dmg) · [Website](https://spareformac.com)
 
-Free, MIT licensed, and no account required. Requires macOS 14 or later on an Apple-silicon Mac. Open the DMG, drag Spare into Applications, and launch it. This first public release is Developer ID signed and notarized by Apple. Updates are installed manually from GitHub Releases.
+Free, MIT licensed, and no account required. Requires macOS 14 or later on an Apple-silicon Mac. Open the DMG, drag Spare into Applications, and launch it. Releases are Developer ID signed and notarized by Apple. From 0.9.0, Spare updates itself through Sparkle; choose **Check for Updates…** in the settings menu to check now. Earlier versions update by downloading the latest release.
 
 ## Features
 
@@ -66,7 +66,7 @@ make test
 make build
 ```
 
-Swift Package Manager, SwiftUI, AppKit, and a small C module using macOS process APIs. There are no third-party runtime dependencies. `make` selects the full Xcode toolchain without changing your system selection. The build script creates an ad-hoc-signed local app. For distribution, `scripts/release.sh` exports with Xcode cloud signing, notarizes the app and DMG, and writes a checksum. Set `TEAM_ID`, `DEVELOPMENT_IDENTITY`, and `NOTARY_PROFILE` using your own Apple Developer account and keychain credentials. The script builds for the host architecture and does not publish automatically.
+Swift Package Manager, SwiftUI, AppKit, and a small C module using macOS process APIs. The only third-party runtime dependency is [Sparkle](https://sparkle-project.org) for updates. `make` selects the full Xcode toolchain without changing your system selection. The build script creates an ad-hoc-signed local app. For distribution, `scripts/release.sh` exports with Xcode cloud signing, notarizes the app and DMG, writes a checksum, and writes a Sparkle `appcast.xml` signed with the EdDSA key in the keychain account `SPARKLE_ACCOUNT` (default `spare`). Set `TEAM_ID`, `DEVELOPMENT_IDENTITY`, and `NOTARY_PROFILE` using your own Apple Developer account and keychain credentials. The script builds for the host architecture and does not publish automatically; attach the DMG and `appcast.xml` to the GitHub release, since the app reads its feed from the latest release.
 
 ## How to interpret the readings
 
@@ -96,7 +96,7 @@ This uses only macOS’s elapsed-input-idle counter, never keystrokes or mouse c
 
 All monitoring stays on your Mac. No account, telemetry, cloud service, network requests, command-line arguments, environment variables, or tab contents are collected. The last 15 minutes of system samples and up to 80 recent activity entries are held in memory only. Activity entries retain at most three contributor names and their resource totals. They expire after 15 minutes, disappear when Spare quits, and can be cleared with the timeline’s Clear button. Memory trends are also held only in memory, for up to five minutes, and discarded when a tracked workload disappears. Recap history is saved locally at `~/Library/Application Support/Spare/recaps.json`, with user-only file permissions. It contains hourly totals, app/project display names, workload kinds, and hashed grouping identifiers; it does not persist executable paths, process lists, or individual sessions. Saving is enabled by default and can be paused. **Clear saved history** removes all saved recap summaries after confirmation. Preferences are saved locally. History is written at most once per minute during monitoring and on a normal quit; a crash may lose the last minute. Read/write failures are shown in the recap view; an unreadable archive is preserved until you explicitly clear it.
 
-This MVP cannot identify individual browser tabs, inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Automatic updates and richer attribution are future work. Review suggestions identify measured resource use; they do not prove that a workload is causing a slowdown or that it is safe to interrupt.
+This MVP cannot identify individual browser tabs, inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Richer attribution is future work. Review suggestions identify measured resource use; they do not prove that a workload is causing a slowdown or that it is safe to interrupt.
 
 ## License
 

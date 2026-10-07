@@ -4,6 +4,7 @@ import SpareCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let monitor = Monitor()
+    private let updater = Updater()
     private var item: NSStatusItem!
     private let popover = NSPopover()
     private var window: NSWindow?
@@ -26,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.start()
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
         monitor.onOpenRecap = { [weak self] in self?.showRecap() }
+        monitor.onCheckForUpdates = { [weak self] in self?.checkForUpdates() }
         if CommandLine.arguments.contains("--window") { showWindow() }
         else { toggle() }
     }
@@ -35,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showWindow()
         return true
+    }
+
+    private func checkForUpdates() {
+        popover.performClose(nil)
+        updater.checkForUpdates()
     }
 
     private func showRecap() {

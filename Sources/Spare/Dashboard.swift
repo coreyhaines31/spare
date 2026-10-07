@@ -91,6 +91,7 @@ struct Dashboard: View {
                     if $0 { filter = .all }
                 }))
                 Divider()
+                Button("Check for Updates…") { monitor.onCheckForUpdates?() }
                 Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                 Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
             } label: { Image(systemName: "gearshape") }
