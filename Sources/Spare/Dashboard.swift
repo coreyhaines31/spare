@@ -68,7 +68,7 @@ struct Dashboard: View {
                 Button(action: goBack) { Image(systemName: "chevron.left") }
                     .buttonStyle(.borderless).help("Back").accessibilityLabel("Back").keyboardShortcut("[", modifiers: .command)
             } else {
-                Image(systemName: "leaf").foregroundStyle(.secondary)
+                Image(nsImage: GaugeGlyph.menuBarImage(elevated: false)).renderingMode(.template).foregroundStyle(.secondary)
             }
             Text(path.isEmpty ? (showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
             Spacer()
@@ -91,6 +91,7 @@ struct Dashboard: View {
                     if $0 { filter = .all }
                 }))
                 Divider()
+                Button("Check for Updates…") { monitor.onCheckForUpdates?() }
                 Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                 Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
             } label: { Image(systemName: "gearshape") }

@@ -6,10 +6,12 @@
 <key>CFBundleIdentifier</key><string>com.spareformac.Spare</string>
 <key>CFBundleExecutable</key><string>Spare</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.8.0</string>
-<key>CFBundleVersion</key><string>8</string>
+<key>CFBundleShortVersionString</key><string>0.10.0</string>
+<key>CFBundleVersion</key><string>10</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>CFBundleIconFile</key><string>Spare</string>
+<key>SUFeedURL</key><string>https://github.com/coreyhaines31/spare/releases/latest/download/appcast.xml</string>
+<key>SUPublicEDKey</key><string>+CtCSZ6LuBXCGCXlALCPbYH2qywG2P5XsDdpCyofsiU=</string>
 </dict></plist>

@@ -4,6 +4,7 @@ import SpareCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let monitor = Monitor()
+    private let updater = Updater()
     private var item: NSStatusItem!
     private let popover = NSPopover()
     private var window: NSWindow?
@@ -12,7 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "leaf", accessibilityDescription: "Spare")
+        item.button?.image = GaugeGlyph.menuBarImage(elevated: false)
+        item.button?.setAccessibilityLabel("Spare")
         item.button?.target = self
         item.button?.action = #selector(toggle)
         item.button?.toolTip = "Spare — your Mac at a glance"
@@ -20,12 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: Dashboard(monitor: monitor))
         monitor.onUpdate = { [weak self] health in
-            self?.item.button?.image = NSImage(systemSymbolName: health.level > 0 ? "exclamationmark.circle" : "leaf", accessibilityDescription: "Spare: \(health.title)")
+            self?.item.button?.image = GaugeGlyph.menuBarImage(elevated: health.level > 0)
+            self?.item.button?.setAccessibilityLabel("Spare: \(health.title)")
             self?.item.button?.toolTip = "Spare — \(health.title)"
         }
         monitor.start()
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
         monitor.onOpenRecap = { [weak self] in self?.showRecap() }
+        monitor.onCheckForUpdates = { [weak self] in self?.checkForUpdates() }
         if CommandLine.arguments.contains("--window") { showWindow() }
         else { toggle() }
     }
@@ -35,6 +39,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showWindow()
         return true
+    }
+
+    private func checkForUpdates() {
+        popover.performClose(nil)
+        updater.checkForUpdates()
     }
 
     private func showRecap() {

@@ -152,4 +152,20 @@ final class MonitorTests: XCTestCase {
         XCTAssertFalse(PressureAlert.isSustained(recovered))
     }
 
+
+    func testKnownMacOSProcessesAreLabeledAndProtected() {
+        let records = [
+            ProcessRecord(pid: 30, name: "mdworker_shared", path: "/System/Library/mdworker_shared", memory: 100),
+            ProcessRecord(pid: 31, name: "mdworker_shared", path: "/System/Library/mdworker_shared", memory: 50),
+            ProcessRecord(pid: 32, name: "mystery", path: "/tmp/mystery", memory: 10),
+            ProcessRecord(pid: 33, name: "WindowServer", path: "/tmp/WindowServer", memory: 10)
+        ]
+        let groups = WorkloadGrouper.group(records, apps: [])
+        let spotlight = groups.first { $0.kind == .system }
+        XCTAssertEqual(spotlight?.subtitle, "macOS · Spotlight and search")
+        XCTAssertEqual(spotlight?.processes.count, 2)
+        XCTAssertEqual(spotlight?.canStop, false)
+        XCTAssertEqual(groups.first { $0.name == "mystery" }?.kind, .background)
+        XCTAssertEqual(groups.first { $0.name == "WindowServer" }?.kind, .background)
+    }
 }

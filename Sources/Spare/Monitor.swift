@@ -30,6 +30,7 @@ final class Monitor: ObservableObject {
     @Published var loginStatus = SMAppService.mainApp.status
     var onOpenWindow: (() -> Void)?
     var onOpenRecap: (() -> Void)?
+    var onCheckForUpdates: (() -> Void)?
     var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
 
     func setLaunchAtLogin(_ enabled: Bool) {
