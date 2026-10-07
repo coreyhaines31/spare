@@ -19,6 +19,11 @@ public enum WorkloadGrouper {
                 workload = developerGroup(owner, kind: kind, project: project(owner.directory))
             } else if let app = lineage.compactMap({ appByPID[$0.identity.pid] }).first {
                 workload = appGroup(app, processes: byPID)
+            } else if let entry = SystemProcessCatalog.entry(for: process.name) {
+                workload = Workload(id: "system:\(process.name)", name: process.name, subtitle: "macOS · \(entry.category)",
+                                    explanation: "\(entry.summary) It’s part of macOS.",
+                                    consequence: "Spare doesn’t stop macOS processes. macOS starts and manages them itself.",
+                                    kind: .system, processes: [], canStop: false)
             } else {
                 let name = process.name.isEmpty ? "Unidentified task" : process.name
                 workload = Workload(id: "process:\(process.identity.pid):\(process.identity.started)", name: name,
@@ -32,7 +37,7 @@ public enum WorkloadGrouper {
         }
         return groups.values.map { original in
             var group = original
-            if group.kind != .background {
+            if group.kind != .background && group.kind != .system {
                 let count = group.processes.count
                 group.subtitle = "\(group.kind.label) · \(count) process\(count == 1 ? "" : "es")"
                 if !group.ports.isEmpty {
