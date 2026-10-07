@@ -46,12 +46,13 @@ public struct AppRecord {
 }
 
 public enum WorkloadKind: String, Codable, CaseIterable {
-    case application, development, agent, background
+    case application, development, agent, system, background
     public var label: String {
         switch self {
         case .application: return "App"
         case .development: return "Development"
         case .agent: return "AI agent"
+        case .system: return "macOS"
         case .background: return "Background"
         }
     }
@@ -60,6 +61,7 @@ public enum WorkloadKind: String, Codable, CaseIterable {
         case .application: return "app.fill"
         case .development: return "terminal.fill"
         case .agent: return "sparkles"
+        case .system: return "apple.logo"
         case .background: return "gearshape.fill"
         }
     }

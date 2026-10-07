@@ -11,7 +11,8 @@ ditto "$BIN_DIR/Sparkle.framework" dist/Spare.app/Contents/Frameworks/Sparkle.fr
 install_name_tool -add_rpath @executable_path/../Frameworks dist/Spare.app/Contents/MacOS/Spare
 cp Resources/Info.plist dist/Spare.app/Contents/Info.plist
 mkdir -p dist/Spare.iconset
-swift scripts/icon.swift dist/Spare.iconset
+swiftc -O scripts/icon/main.swift Sources/Spare/GaugeGlyph.swift -o .build/spare-icon
+.build/spare-icon dist/Spare.iconset
 iconutil -c icns dist/Spare.iconset -o dist/Spare.app/Contents/Resources/Spare.icns
 codesign --force --sign - dist/Spare.app
 printf 'Built %s/dist/Spare.app\n' "$PWD"
