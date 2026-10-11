@@ -90,7 +90,7 @@ struct ResourceSummary: View {
             Text(monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…").fontWeight(.semibold)
             UsageBar(fraction: monitor.ready ? sample.cpu / 100 : 0, color: busy ? .orange : .accentColor)
                 .accessibilityHidden(true)
-            Text(monitor.ready ? "\(DisplayFormat.percent(max(0, 100 - sample.cpu))) available" : " ")
+            Text(monitor.ready ? "\(100 - Int(min(max(sample.cpu, 0), 100).rounded()))% available" : " ")
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
