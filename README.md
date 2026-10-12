@@ -17,6 +17,12 @@ Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 2. Open it and drag **Spare** into your **Applications** folder.
 3. Open Spare from Applications or Spotlight. Releases are signed and notarized by Apple; if macOS asks whether you're sure you want to open an app downloaded from the internet, choose **Open**.
 
+Or install with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask coreyhaines31/tap/spare
+```
+
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
 
 ## First launch
