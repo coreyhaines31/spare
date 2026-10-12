@@ -1,111 +1,110 @@
 # Spare
 
-Free CPU and memory monitoring for people who push their Macs to the limit.
+**See what's using your Mac.** A free, open-source menu bar app that shows CPU and memory use by the apps, projects, and AI agents you actually recognize, and helps you decide what's safe to close.
 
-Spare is a native macOS menu bar app that turns resource readings into recognizable apps, projects, and explanations. It helps you decide what to close before your Mac becomes uncomfortable to use.
+[Download Spare 0.13.0](https://github.com/coreyhaines31/spare/releases/download/v0.13.0/Spare-0.13.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
 
-## Download
+Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
-[Download Spare 0.13.0 for Apple silicon](https://github.com/coreyhaines31/spare/releases/download/v0.13.0/Spare-0.13.0-arm64.dmg) · [Website](https://spareformac.com)
+## Requirements
 
-Free, MIT licensed, and no account required. Requires macOS 14 or later on an Apple-silicon Mac. Open the DMG, drag Spare into Applications, and launch it. Releases are Developer ID signed and notarized by Apple. From 0.9.0, Spare updates itself through Sparkle; choose **Check for Updates…** in the settings menu to check now. Earlier versions update by downloading the latest release.
+- An Apple-silicon Mac (M1 or later). Intel Macs aren't supported.
+- macOS 14 Sonoma or later.
 
-## Features
+## Install
 
-- Live CPU, memory pressure, estimated memory usage, and short resource histories.
-- Five-minute memory charts for identified workloads and sessions, with a “Growing recently” card for notable increases.
-- A dedicated, resizable Recap window with Today, This week, and Last 7 days; CPU charts, pressure time, rankings, comparisons, contextual help, and CSV export.
-- A “While you were away” return summary with observed resource use and which leading workloads are running now.
-- A recent-activity timeline with pressure changes, recoveries, monitoring gaps, and snapshots of the largest identified resource users.
-- Apps grouped with their helpers; recognized development tools grouped by working folder or project.
-- Recognition for common local AI tools, including Claude, Codex, Ollama, Aider, and OpenCode.
-- Apps, Projects, and Agents filters; search by name, folder, or local port; sorting by memory or CPU.
-- A specific review suggestion during elevated pressure, based on the largest visible resource user that Spare can help close.
-- Agent-owned runtime processes stay with the agent; independent development servers remain separate.
-- Explanations of what an app or project does and what closing it affects.
-- Listening TCP ports for recognized development processes.
-- Live detail readings, with a frozen process list when you begin reviewing a stop request.
-- Individual agent and development sessions inside a project, inferred from parent relationships and distinguished by start time.
-- Reviewed, graceful app quit and development-process stop requests, followed by feedback from subsequent readings. No automatic cleanup or force killing.
-- **Inside an app:** a browser or Electron app's helpers broken down by role (tabs and sites, extensions, graphics, network, utilities, separate sessions), sortable by memory, CPU, or type. Tab, extension, and separate-session processes can be ended individually after an inline review; locked rows explain why the app needs them.
-- **Separate sessions:** extra instances of an app, such as Chrome for Testing windows opened by browser automation, show what opened them (an AI agent, a dev tool, an app, or a background daemon that outlived its agent). Background and leftover sessions can be closed together after one review.
-- **Chrome shortcuts:** one click opens Chrome's Task Manager (Window → Task Manager) to match processes to tabs, using Accessibility permission only for that menu item; a Memory Saver tip reads Chrome's setting and links to its Performance settings.
-- **Dev server commands:** development rows show what is running ("next dev", "http.server 8765", "clipatra serve, slack-mcp-server +4"), with **Open localhost** links for web ports.
-- **Not used lately:** apps idle for two or more hours that use at least 300 MB are marked, with a reviewed Quit or Quit all.
-- **Growing memory:** any row whose memory keeps climbing gets a trend marker.
-- **macOS processes:** 21 common system processes such as WindowServer, kernel_task, and mds_stores are labeled as protected macOS tasks with plain-language explanations.
-- **Docker:** Docker's VM explains its memory limit (from Docker Desktop's settings, or its default of half your Mac's memory) and links to Docker Desktop.
-- Optional launch at login and a persistent window available from the menu.
-- Menu bar warning indicator; optional notifications after about a minute of sustained pressure, with a ten-minute cooldown.
+1. [Download the latest DMG](https://github.com/coreyhaines31/spare/releases/latest).
+2. Open it and drag **Spare** into your **Applications** folder.
+3. Open Spare from Applications or Spotlight. Releases are signed and notarized by Apple; if macOS asks whether you're sure you want to open an app downloaded from the internet, choose **Open**.
 
-## Run locally
+Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
 
-Requires macOS 14 or later and full Xcode at `/Applications/Xcode.app`. Built and tested on Apple silicon; Intel has not been tested.
+## First launch
 
-```sh
-make app
-open dist/Spare.app
-```
+Spare is a menu bar app, so it has **no Dock icon and no app window by default**. When it opens, look for the gauge icon in the top-right of your menu bar. Spare opens its panel there each time it launches.
 
-Click the gauge in the menu bar to open Spare. Use the clock button beside the menu to see recent activity. Timeline entries capture readings at that moment; **View current** opens the workload’s current readings for review. The Settings menu at the top right offers pressure notifications, unidentified background processes, and Quit Spare. The overview keeps search and filters above the app list; use Back to return from a session to its project, or from current readings to recent activity. Notifications are off until you enable them. The app starts monitoring immediately. Launch at login is off by default; enable it from the menu if wanted. If macOS requires approval, the menu links to Login Items in System Settings.
+- **Click the gauge** any time to open or close Spare.
+- **Can't see the icon?** See [Troubleshooting](#troubleshooting). On MacBooks with a notch, a full menu bar can hide it.
+- **Prefer a window?** Choose **Open in a window** from the gear menu, or open Spare again from Applications.
 
-Use the chart button in the toolbar to open the larger **Recap** window, then choose **Today**, **This week**, or **Last 7 days**. The Recap window resizes independently from the menu bar overview. Click an info button beside a reading for its definition. **Export CSV…** saves the selected period’s hourly system and workload summaries through the native save dialog. History starts with this version; earlier activity cannot be recovered. The recap updates every 30 seconds. Save-history and clear-history controls are at the bottom of this view.
+The first readings appear within a few seconds. Spare doesn't need any permissions to start monitoring. A few optional features ask for one when you turn them on:
 
-Memory history and technical details are collapsed in the detail view. Use **About these readings** in the footer for an explanation of CPU and memory measurements.
+| Feature | Permission | When it's asked |
+|---|---|---|
+| Warn about sustained pressure | Notifications | When you turn the warning on in the gear menu |
+| Launch at login | Login Items | When you turn it on; macOS may ask you to approve it |
+| Open Chrome's Task Manager | Accessibility | Only when you click that button; used only to choose that menu item |
 
-For a standalone inspection window:
+## A quick tour
 
-```sh
-open dist/Spare.app --args --window
-```
+**The overview.** The top shows how hard your Mac is working: CPU in use, with how much is still available, and macOS memory pressure (green Normal, orange Warning, red Critical). Below it, everything using resources is grouped into things you recognize, largest first.
 
-You can also choose **Open in a window** from the menu, or open Spare again from Finder. Quit an already running copy first when changing launch arguments. For a read-only system snapshot:
+- **Apps** appear with all their helper processes counted together, so Chrome is one line instead of 50.
+- **Projects** are local dev servers and tools grouped by folder, with the command and port, like *website · port 3000 · next dev*.
+- **Agents** such as Claude Code, Codex, Aider, Ollama, and OpenCode are grouped by the folder they're working in.
+- **macOS** processes like WindowServer and kernel_task are labeled with a plain explanation and are never offered for stopping.
 
-```sh
-dist/Spare.app/Contents/MacOS/Spare --snapshot
-```
+Use the filters, search by name, folder, or port, and sort by memory or CPU.
 
-## Development
+**Hints in the list.** An orange trend arrow means an app's memory keeps climbing. *Not used in 5h* marks apps you've left open but haven't used, and the **Not used lately** section offers to quit them.
 
-```sh
-brew install swiftlint  # if needed
-make lint
-make test
-make build
-```
+**Details.** Click any row to see what it is, what closing it would affect, and its memory history. For browsers and Electron apps, **Inside** breaks the app into tabs and sites, extensions, graphics, and network processes. You can end a single heavy tab or extension process without quitting the whole app. Sessions opened by browser automation show what opened them, and leftover ones can be closed together.
 
-Swift Package Manager, SwiftUI, AppKit, and a small C module using macOS process APIs. The only third-party runtime dependency is [Sparkle](https://sparkle-project.org) for updates. `make` selects the full Xcode toolchain without changing your system selection. The build script creates an ad-hoc-signed local app. For distribution, `scripts/release.sh` exports with Xcode cloud signing, notarizes the app and DMG, writes a checksum, and writes a Sparkle `appcast.xml` signed with the EdDSA key in the keychain account `SPARKLE_ACCOUNT` (default `spare`). Set `TEAM_ID`, `DEVELOPMENT_IDENTITY`, and `NOTARY_PROFILE` using your own Apple Developer account and keychain credentials. The script builds for the host architecture and does not publish automatically; attach the DMG and `appcast.xml` to the GitHub release, since the app reads its feed from the latest release.
+**Closing things.** Spare never closes anything on its own. Every quit or stop shows what it affects and waits for you to confirm. Apps get a normal quit request, so they can ask you to save first.
 
-## How to interpret the readings
+**Recaps.** The chart button opens the Recap window for Today, This week, or Last 7 days: CPU charts, time under memory pressure, what used the most, and CSV export. History stays on your Mac for up to 30 days and can be paused or cleared.
 
-Process CPU counters are converted from Mach time units to nanoseconds before calculating percentages. Version 0.7 corrects earlier under-reporting on Apple silicon and migrates any locally saved version-1 recap CPU totals. CPU percentages use the capacity of your whole Mac, so they differ from Activity Monitor's per-core process percentages. The first measurement needs a second sample. Memory pressure comes from macOS; high RAM or swap usage alone does not trigger a warning. System used memory is an estimate; process physical footprints can overlap and won't sum to the system total. The memory sparkline shows estimated usage, not historical pressure.
+**While you were away.** Step away for a while and Spare summarizes what ran while you were gone, including which agents and projects are still running.
 
-Spare reads processes belonging to your user. System totals include other users and macOS. Ownership is inferred from app bundle paths and parent processes. Development project names come from the working directory and nearby project manifests; multiple sessions for one project appear together. Open the project to review an individual session, or review the whole group. Session boundaries are inferred from visible parent processes; if a parent exits, its remaining tools may appear as a new session. Review the process list before stopping anything. Agent detection is heuristic; tools running behind generic runtimes may appear as development tasks.
+## Troubleshooting
 
-Quit requests can be refused or delayed by an app. Development stop sends SIGTERM to the reviewed process identities after rechecking ownership and start time; it does not kill a whole process group or newly created children. A supervisor may restart a stopped service. Spare checks accepted stop requests against subsequent process readings, reports when those identities are no longer detected, and reports remaining processes after 15 seconds. Disappearance from the readings is not proof of reclaimed memory or successful saving. Unknown background tasks have no stop button. Low CPU never means an agent is finished.
+**I can't find Spare in the menu bar.**
+Open Spare again from Applications or Spotlight; it opens its window. If the icon is hidden, your menu bar is probably full. On MacBooks with a notch, icons that don't fit are hidden behind it. Quit a few other menu bar apps, or check your menu bar manager (such as Bartender or Ice) for hidden items.
 
-Growth highlights require at least 60 seconds of continuous readings and a net increase of both 256 MB and 25%. Growth may be normal. Charts use a labeled scale and reset after monitoring gaps, app restarts, or complete process replacement. Changes to the group’s helpers or sessions are disclosed. Trends are limited to 256 groups/sessions and 101 points each, prioritized by current memory use.
+**The readings say "Getting a feel for your Mac."**
+Spare needs two readings to measure CPU, which takes a few seconds after launch or after your Mac wakes.
 
-## Daily and weekly recaps
+**Memory pressure says Unavailable.**
+macOS didn't report it for that reading. CPU and memory use are still measured; it usually returns on the next reading.
 
-Recaps retain up to 30 days of compact hourly summaries. CPU averages are time-weighted; “CPU above 85%” measures observed busy time, not necessarily a problem. Memory pressure time uses macOS warning/critical readings; unavailable pressure is shown separately. Charts show recorded hourly averages today or daily averages this week; orange bars mark periods that included elevated memory pressure. The local calendar determines day and week boundaries, including daylight-saving changes. Last 7 days includes today and the preceding six calendar days; its comparison uses the seven calendar days immediately before that range.
+**Why can't I end some processes?**
+Rows with a lock are processes the app needs to keep running, such as its graphics or network process, or the app itself. Click the lock to see why. To free that memory, quit the whole app.
 
-Rankings combine top-level apps/projects/agents with their helpers, without also counting nested sessions. Their averages use all recorded time as the denominator, including time when a workload was absent. Seen/running time does not measure active use. At most 128 workload summaries are retained per hour, so smaller tasks may be omitted. Contributor names describe measured use, not the cause of a slowdown.
+**Which Chrome tab is using all that memory?**
+Chrome doesn't tell other apps which tab each process runs. Under **Inside Google Chrome**, click **Open Chrome's Task Manager**; it lists every tab with its memory.
 
-Comparisons use average CPU and the proportion of known memory-pressure readings, with recorded duration shown for each period. They appear after both periods have at least a minute of coverage. Explicit sleep/wake notifications reset the sampler and history baselines, including for short sleeps. Sleep, pauses, restarts, and sample gaps over ten seconds are unobserved, never filled as idle time. There is no backfill. Retention is enforced while Spare runs; if it is closed for over 30 days, old summaries are pruned the next time it runs.
+**Launch at login doesn't stick.**
+macOS may need you to approve it. Choose **Approve in Login Items…** from the gear menu.
 
-## While you were away
+**Something else isn't right.**
+[Open an issue](https://github.com/coreyhaines31/spare/issues/new/choose) with your macOS version, Spare version (gear menu → Check for Updates… shows it), and what you expected to see.
 
-After five minutes without keyboard or mouse input, Spare begins a temporary away summary while history recording is enabled. When input resumes, at least a minute of observed readings produces a return card in the overview and Recap window. It shows recorded and unobserved time, memory-pressure time, the largest recorded users, and which groups are detected now. The first five idle minutes are excluded. Running now does not establish that it is the same session, or that an agent completed productive work.
+## Uninstall
 
-This uses only macOS’s elapsed-input-idle counter, never keystrokes or mouse contents. Away summaries remain in memory for up to 18 hours; dismissing, pausing history, clearing history, or quitting removes them. Ordinary hourly resource summaries retain the existing 30-day local policy. CSV exports include display names and hourly measurements, but no raw process paths or commands. Names are quoted and spreadsheet formulas neutralized.
+1. Choose **Quit Spare** from the gear menu.
+2. Drag Spare from Applications to the Trash.
+3. Optionally, remove its saved history and settings:
+   ```sh
+   rm -r ~/Library/Application\ Support/Spare
+   defaults delete com.spareformac.Spare
+   ```
 
-## Privacy and limits
+If you allowed Accessibility for Spare, you can also remove it in System Settings → Privacy & Security → Accessibility.
 
-All monitoring stays on your Mac. No account, telemetry, cloud service, or network requests are involved, and tab contents are never read. Command-line arguments of your own processes are read on your Mac to label helpers and summarize commands; they are shown in Spare but never saved or sent, and `key=value` arguments are left out of summaries. macOS returns a process's environment variables in the same buffer as its arguments; Spare discards that part without using it. Spare saves when each app was last in front, to find apps you haven't used lately; clearing saved history clears it too. Accessibility permission is requested only when you ask Spare to open Chrome's Task Manager. The last 15 minutes of system samples and up to 80 recent activity entries are held in memory only. Activity entries retain at most three contributor names and their resource totals. They expire after 15 minutes, disappear when Spare quits, and can be cleared with the timeline’s Clear button. Memory trends are also held only in memory, for up to five minutes, and discarded when a tracked workload disappears. Recap history is saved locally at `~/Library/Application Support/Spare/recaps.json`, with user-only file permissions. It contains hourly totals, app/project display names, workload kinds, and hashed grouping identifiers; it does not persist executable paths, process lists, or individual sessions. Saving is enabled by default and can be paused. **Clear saved history** removes all saved recap summaries after confirmation. Preferences are saved locally. History is written at most once per minute during monitoring and on a normal quit; a crash may lose the last minute. Read/write failures are shown in the recap view; an unreadable archive is preserved until you explicitly clear it.
+## Privacy
 
-Spare cannot tell which tab or site a browser process runs (Chrome's own Task Manager can), inspect Docker containers, measure per-app power consumption, predict every freeze, or fix system-level contention. It reports sustained CPU load and memory pressure rather than claiming a diagnosis. Richer attribution is future work. Review suggestions identify measured resource use; they do not prove that a workload is causing a slowdown or that it is safe to interrupt.
+All monitoring happens on your Mac. Spare has no account, no analytics, and makes no network requests except checking for updates. It never reads tab contents or saves process lists. It reads the launch arguments of your own processes to label them and show commands, but never saves or sends them. Recap history is stored locally at `~/Library/Application Support/Spare/` and can be paused or cleared at any time. The full details are in [How Spare works](docs/how-it-works.md#privacy-in-full).
+
+## Limits
+
+Spare measures CPU and memory. It doesn't monitor GPU, disk, network, temperature, fans, or battery, and it doesn't free or "clean" memory. It can't tell which tab a browser process runs, look inside Docker containers, or measure per-app power use. Readings show what's using resources, not proof of what's causing a slowdown.
+
+## Learn more
+
+- [How Spare works](docs/how-it-works.md): how readings, grouping, recaps, and idle detection are calculated.
+- [Contributing](CONTRIBUTING.md): build from source, run the tests, and send a change.
+- [spareformac.com](https://spareformac.com): guides, comparisons, and a library of macOS processes.
 
 ## License
 
-MIT. Commercial use and hosted products are permitted. Future services can be developed separately; already-published MIT code remains available under that license.
+MIT. See [LICENSE](LICENSE).
