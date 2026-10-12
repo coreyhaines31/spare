@@ -7,6 +7,8 @@ struct AppHelpersSection: View {
     @ObservedObject var monitor: Monitor
     @State private var showAll = false
     @State private var confirming: ProcessIdentity?
+    @State private var chromeMessage: String?
+    @State private var memorySaver = ChromeMemorySaver.unknown
     private let collapsedCount = 8
 
     private var browser: Bool { ProcessClassifier.isBrowser(workload.name) }
@@ -22,7 +24,9 @@ struct AppHelpersSection: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Inside \(workload.name)").font(.headline)
             Text(summary(all)).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if browser && ["chrome", "brave"].contains(where: workload.name.lowercased().contains) {
+            if workload.name == "Google Chrome", let pid = workload.appIdentity?.pid {
+                chromeTools(pid: pid)
+            } else if browser && workload.name.lowercased().contains("brave") {
                 Label("To match a process to a tab, open \(workload.name)’s Task Manager: Window → Task Manager. It shows each tab’s memory.",
                       systemImage: "lightbulb").font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -35,6 +39,45 @@ struct AppHelpersSection: View {
             if all.count > collapsedCount {
                 Button(showAll ? "Show fewer" : "Show all \(all.count) processes") { showAll.toggle() }.buttonStyle(.link)
             }
+        }
+    }
+
+    private func chromeTools(pid: Int32) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                switch ChromeShortcuts.openTaskManager(pid: pid) {
+                case .opened: chromeMessage = nil
+                case .needsPermission:
+                    chromeMessage = "Allow Spare in System Settings → Privacy & Security → Accessibility, then click again. Spare only uses it to choose this menu item."
+                case .notFound:
+                    chromeMessage = "Couldn’t reach that menu. In Chrome, choose Window → Task Manager."
+                }
+            } label: { Label("Open Chrome’s Task Manager", systemImage: "list.bullet.rectangle") }
+            Text("It names the tab behind each process. Click the Memory footprint column to sort, then End process.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let chromeMessage {
+                Text(chromeMessage).font(.caption).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
+            }
+            if let tip = memorySaverTip, let appPath = workload.appPath {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "leaf.arrow.triangle.circlepath").foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(tip).font(.caption).fixedSize(horizontal: false, vertical: true)
+                        Button("Open Performance settings") {
+                            ChromeShortcuts.openPerformanceSettings(appURL: URL(fileURLWithPath: appPath))
+                        }.buttonStyle(.link).font(.caption)
+                    }
+                }
+            }
+        }
+        .onAppear { memorySaver = ChromeMemorySaver.read() }
+    }
+
+    private var memorySaverTip: String? {
+        switch memorySaver {
+        case .off: return "Memory Saver is off. Turning it on lets Chrome unload tabs you haven’t used recently."
+        case .on(maximum: false): return "Memory Saver is on. Setting it to Maximum unloads inactive tabs sooner."
+        default: return nil
         }
     }
 
