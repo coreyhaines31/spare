@@ -7,16 +7,34 @@ struct AppHelpersSection: View {
     @ObservedObject var monitor: Monitor
     @State private var showAll = false
     @State private var confirming: ProcessIdentity?
+    @State private var explaining: ProcessIdentity?
+    @State private var sort = HelperSort.memory
     @State private var menuUnavailable = false
     @State private var memorySaver = ChromeMemorySaver.unknown
     private let collapsedCount = 8
 
     private var browser: Bool { ProcessClassifier.isBrowser(workload.name) }
     private var helpers: [(process: ProcessRecord, role: HelperRole)] {
-        workload.processes.sorted { $0.memory > $1.memory }.map { process in
-            (process, HelperRole.classify(name: process.name, arguments: ArgumentCache.arguments(for: process.identity),
-                                          isMain: process.identity == workload.appIdentity))
+        let mainPath = workload.processes.first { $0.identity == workload.appIdentity }?.path ?? ""
+        let classified = workload.processes.map { process in
+            (process: process, role: HelperRole.classify(name: process.name, arguments: ArgumentCache.arguments(for: process.identity),
+                                                         isMain: process.identity == workload.appIdentity,
+                                                         path: process.path, mainPath: mainPath))
         }
+        switch sort {
+        case .memory: return classified.sorted { $0.process.memory > $1.process.memory }
+        case .cpu: return classified.sorted { ($0.process.cpu, $0.process.memory) > ($1.process.cpu, $1.process.memory) }
+        case .type:
+            return classified.sorted {
+                let left = $0.role.pluralLabel(browser: browser), right = $1.role.pluralLabel(browser: browser)
+                return left == right ? $0.process.memory > $1.process.memory : left < right
+            }
+        }
+    }
+
+    private enum HelperSort: String, CaseIterable, Identifiable {
+        case memory = "Memory", cpu = "CPU", type = "Type"
+        var id: Self { self }
     }
 
     var body: some View {
@@ -31,6 +49,9 @@ struct AppHelpersSection: View {
                       systemImage: "lightbulb").font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            Picker("Sort by", selection: $sort) {
+                ForEach(HelperSort.allCases) { Text($0.rawValue).tag($0) }
+            }.pickerStyle(.segmented).controlSize(.small)
             VStack(spacing: 2) {
                 ForEach(showAll ? all : Array(all.prefix(collapsedCount)), id: \.process.identity) { helper in
                     row(helper.process, helper.role)
@@ -103,7 +124,14 @@ struct AppHelpersSection: View {
                 if role.canEnd && confirming != process.identity {
                     Button("End…") { confirming = process.identity }
                         .controlSize(.small).help("Review ending this \(role.label(browser: browser).lowercased()) process")
+                } else if let reason = role.lockedReason {
+                    Button { explaining = explaining == process.identity ? nil : process.identity } label: {
+                        Image(systemName: "lock").foregroundStyle(.secondary)
+                    }.buttonStyle(.borderless).help(reason).accessibilityLabel("Why this can’t be ended")
                 }
+            }
+            if explaining == process.identity, let reason = role.lockedReason {
+                Text(reason).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if confirming == process.identity {
                 VStack(alignment: .leading, spacing: 8) {
