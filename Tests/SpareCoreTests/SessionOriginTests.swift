@@ -8,6 +8,11 @@ final class SessionOriginTests: XCTestCase {
         XCTAssertEqual(CommandSummary.make(["node", "/usr/lib/node_modules/@playwright/test/cli.js", "test"]), "@playwright/test test")
         XCTAssertEqual(CommandSummary.make(["/opt/homebrew/bin/python3.12", "-m", "uvicorn", "app:main"]), "uvicorn app:main")
         XCTAssertEqual(CommandSummary.make(["ruby", "/work/api/bin/rails", "server"]), "rails server")
+        XCTAssertEqual(CommandSummary.make(["/Library/Frameworks/Python.framework/Versions/3.12/Resources/Python.app/Contents/MacOS/Python", "-m", "http.server", "8765"]), "http.server 8765")
+        XCTAssertEqual(CommandSummary.make(["npm exec clipatra@latest serve"]), "clipatra serve")
+        XCTAssertEqual(CommandSummary.make(["npm exec clipatra@latest serve", "--port", "1"]), "clipatra serve")
+        XCTAssertEqual(CommandSummary.make(["npm exec slack-mcp-server@latest --transport stdio"]), "slack-mcp-server")
+        XCTAssertEqual(CommandSummary.make(["npx", "@modelcontextprotocol/server-github@1.2.0"]), "@modelcontextprotocol/server-github")
         XCTAssertNil(CommandSummary.make([]))
     }
 
@@ -44,5 +49,21 @@ final class SessionOriginTests: XCTestCase {
     func testSessionWhoseLauncherExitedIsLeftover() {
         let session = ProcessRecord(pid: 30, parent: 1, name: "Chrome", path: "/Apps/Chrome")
         XCTAssertEqual(SessionOrigin.find(for: session, in: [:], apps: [:], arguments: { _ in [] }), .leftover)
+    }
+
+    func testDevelopmentWorkloadCommandAndWebPorts() {
+        let server = ProcessRecord(pid: 50, name: "node", path: "/bin/node", directory: "/work/site", ports: [3000, 9229])
+        let workloads = WorkloadGrouper.group([server], apps: [])
+        let site = workloads.first { $0.kind == .development }
+        XCTAssertEqual(site?.commandSummary(arguments: { _ in ["node", "/work/site/node_modules/next/dist/bin/next", "dev"] }), "next dev")
+        XCTAssertEqual(site?.webPorts, [3000])
+        let tools = WorkloadGrouper.group([
+            ProcessRecord(pid: 60, name: "node", path: "/bin/node", directory: "/work/app", memory: 10),
+            ProcessRecord(pid: 61, name: "node", path: "/bin/node", directory: "/work/app", memory: 30),
+            ProcessRecord(pid: 62, name: "node", path: "/bin/node", directory: "/work/app", memory: 20, ports: [5173]),
+            ProcessRecord(pid: 63, name: "node", path: "/bin/node", directory: "/work/app", memory: 5)
+        ], apps: []).first
+        let names: [Int32: String] = [60: "a-mcp", 61: "b-mcp", 62: "vite", 63: "a-mcp"]
+        XCTAssertEqual(tools?.commandSummary(arguments: { ["node", "/x/node_modules/\(names[$0.pid]!)/cli.js"] }), "vite, b-mcp +1")
     }
 }
