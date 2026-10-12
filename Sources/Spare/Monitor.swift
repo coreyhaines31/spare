@@ -185,6 +185,8 @@ final class Monitor: ObservableObject {
     }
 
     func clearRecaps() {
+        activityLog.clear()
+        idleApps = []
         queue.async { [self] in
             if recapStore.clear() {
                 awayTracker.clear()

@@ -32,6 +32,16 @@ final class IdleAppsTests: XCTestCase {
         XCTAssertEqual(afterGap.idleTime(appPath: "/A.app", launched: nil, now: start.addingTimeInterval(20_600)), 600)
     }
 
+    func testClearForgetsActivations() {
+        let store = defaults()
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let log = AppActivityLog(defaults: store, now: start)
+        log.recordActivation(appPath: "/A.app", at: start.addingTimeInterval(500))
+        log.clear()
+        XCTAssertEqual(log.idleTime(appPath: "/A.app", launched: nil, now: start.addingTimeInterval(600)), 600)
+        XCTAssertNil(store.object(forKey: "appLastActive"))
+    }
+
     func testFindsQuittableIdleAppsWithMeaningfulMemory() {
         let big = Workload(id: "a", name: "Big", subtitle: "", explanation: "", consequence: "", kind: .application,
                            processes: [ProcessRecord(pid: 1, name: "Big", path: "/Big", memory: 900 << 20)], canStop: true)

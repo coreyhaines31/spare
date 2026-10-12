@@ -27,6 +27,12 @@ public final class AppActivityLog {
         defaults.set(date.timeIntervalSince1970, forKey: seenKey)
     }
 
+    /// Forgets every saved activation, for when someone clears Spare's history.
+    public func clear() {
+        lastActive = [:]
+        defaults.removeObject(forKey: key)
+    }
+
     public func recordActivation(appPath: String, at date: Date = Date()) {
         lastActive[appPath] = date
         defaults.set(lastActive.mapValues(\.timeIntervalSince1970), forKey: key)
