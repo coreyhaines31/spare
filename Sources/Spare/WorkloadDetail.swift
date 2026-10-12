@@ -92,7 +92,7 @@ struct WorkloadDetail: View {
                 if review == nil, let trend = monitor.memoryTrends[selection.id] {
                     DisclosureGroup("Memory history") { MemoryTrendView(trend: trend).padding(.top, 8) }
                 }
-                DisclosureGroup("Technical details · \(workload.processes.count) processes") {
+                DisclosureGroup("Technical details · \(workload.processes.count) process\(workload.processes.count == 1 ? "" : "es")") {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(workload.processes, id: \.identity) { process in
                             VStack(alignment: .leading, spacing: 3) {
