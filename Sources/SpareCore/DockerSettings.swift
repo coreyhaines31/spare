@@ -16,9 +16,10 @@ public enum DockerSettings {
         parse((try? Data(contentsOf: url)) ?? Data(), physical: physical)
     }
 
+    /// Docker has written the key as both `MemoryMiB` and `memoryMiB`, so it's matched without case.
     public static func parse(_ data: Data, physical: UInt64) -> MemoryLimit {
         if let settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let mebibytes = settings["MemoryMiB"] as? Int, mebibytes > 0 {
+           let mebibytes = settings.first(where: { $0.key.lowercased() == "memorymib" })?.value as? Int, mebibytes > 0 {
             return MemoryLimit(bytes: UInt64(mebibytes) * 1024 * 1024, isDefault: false)
         }
         return MemoryLimit(bytes: physical / 2, isDefault: true)
