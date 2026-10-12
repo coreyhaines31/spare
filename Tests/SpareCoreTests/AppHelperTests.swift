@@ -13,6 +13,16 @@ final class AppHelperTests: XCTestCase {
         XCTAssertEqual(HelperRole.classify(name: "Mystery", arguments: [], isMain: false), .other)
     }
 
+    func testAnotherInstanceOfTheAppIsASeparateSession() {
+        let path = "/Applications/Chrome.app/Contents/MacOS/Chrome"
+        XCTAssertEqual(HelperRole.classify(name: "Chrome", arguments: [path, "--user-data-dir=/tmp/a"], isMain: false,
+                                           path: path, mainPath: path), .session)
+        XCTAssertEqual(HelperRole.classify(name: "Chrome", arguments: [], isMain: false, path: path, mainPath: path), .other)
+        XCTAssertTrue(HelperRole.session.canEnd)
+        XCTAssertNil(HelperRole.session.lockedReason)
+        XCTAssertNotNil(HelperRole.graphics.lockedReason)
+    }
+
     func testWebKitProcessesAreClassifiedByName() {
         XCTAssertEqual(HelperRole.classify(name: "com.apple.WebKit.WebContent", arguments: [], isMain: false), .page)
         XCTAssertEqual(HelperRole.classify(name: "com.apple.WebKit.Networking", arguments: [], isMain: false), .network)
