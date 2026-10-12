@@ -20,6 +20,14 @@ enum ChromeShortcuts {
         return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success ? .opened : .notFound
     }
 
+    static var isTrusted: Bool { AXIsProcessTrusted() }
+
+    /// Opens System Settings at Privacy & Security → Accessibility.
+    static func openAccessibilitySettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     static func openPerformanceSettings(appURL: URL) {
         guard let url = URL(string: "chrome://settings/performance") else { return }
         NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())

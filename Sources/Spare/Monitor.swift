@@ -31,6 +31,8 @@ final class Monitor: ObservableObject {
     var onOpenWindow: (() -> Void)?
     var onOpenRecap: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
+    @Published var awaitingAccessibility = false
+    private var accessibilityPoll: Timer?
     var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -236,6 +238,33 @@ final class Monitor: ObservableObject {
             notice = "Stop requested for \(sent) of \(total) processes. Others may have exited or could not be stopped."
         }
     }
+    /// Opens Chrome's Task Manager, or waits up to two minutes for Accessibility permission and then opens it.
+    func openChromeTaskManager(pid: Int32) -> ChromeShortcuts.Result {
+        let result = ChromeShortcuts.openTaskManager(pid: pid)
+        accessibilityPoll?.invalidate()
+        awaitingAccessibility = result == .needsPermission
+        guard awaitingAccessibility else { return result }
+        let deadline = Date().addingTimeInterval(120)
+        accessibilityPoll = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+            guard let self, Date() < deadline, self.awaitingAccessibility else {
+                timer.invalidate()
+                self?.awaitingAccessibility = false
+                return
+            }
+            if ChromeShortcuts.isTrusted {
+                timer.invalidate()
+                self.awaitingAccessibility = false
+                _ = ChromeShortcuts.openTaskManager(pid: pid)
+            }
+        }
+        return result
+    }
+
+    func cancelAccessibilityWait() {
+        accessibilityPoll?.invalidate()
+        awaitingAccessibility = false
+    }
+
     /// Ends one tab or extension process inside an app after the person reviewed it.
     func endHelper(_ process: ProcessRecord, role: HelperRole, in workload: Workload) {
         guard workload.kind == .application, role.canEnd, process.identity != workload.appIdentity else { return }
