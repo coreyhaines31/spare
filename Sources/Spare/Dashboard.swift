@@ -110,6 +110,7 @@ struct Dashboard: View {
             } else if let growing, let trend = monitor.memoryTrends[growing.id] {
                 suggestionRow(growing, subtitle: trend.summary, symbol: "chart.line.uptrend.xyaxis")
             }
+            if !monitor.idleApps.isEmpty { IdleAppsSection(monitor: monitor) }
             Divider()
             VStack(spacing: 10) {
                 NativeSearchField(text: $query).frame(height: 24)
@@ -126,7 +127,11 @@ struct Dashboard: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(visible) { workload in
-                        WorkloadRow(workload: workload, sortCPU: sortCPU) { path.append(workload) }
+                        WorkloadRow(workload: workload, sortCPU: sortCPU,
+                                    note: monitor.idleApps.first { $0.workload.id == workload.id }.map { IdleApps.describe($0.idle) },
+                                    growth: monitor.memoryTrends[workload.id].flatMap { $0.isGrowing ? $0.summary : nil }) {
+                            path.append(workload)
+                        }
                     }
                     if visible.isEmpty {
                         VStack(spacing: 8) {

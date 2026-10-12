@@ -34,6 +34,9 @@ struct NativeSearchField: NSViewRepresentable {
 struct WorkloadRow: View {
     let workload: Workload
     let sortCPU: Bool
+    var note: String?
+    /// Shown when memory keeps climbing, with the trend as its tooltip.
+    var growth: String?
     let select: () -> Void
     @State private var hovered = false
     var body: some View {
@@ -42,12 +45,20 @@ struct WorkloadRow: View {
                 WorkloadIcon(workload: workload)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
-                    Text(workload.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text([workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:)), note]
+                        .compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(sortCPU ? DisplayFormat.percent(workload.cpu) : DisplayFormat.memory(workload.memory))
-                        .font(.body).monospacedDigit()
+                    HStack(spacing: 4) {
+                        if let growth {
+                            Image(systemName: "chart.line.uptrend.xyaxis").font(.caption).foregroundStyle(.orange)
+                                .help("Memory growing · \(growth)").accessibilityLabel("Memory growing")
+                        }
+                        Text(sortCPU ? DisplayFormat.percent(workload.cpu) : DisplayFormat.memory(workload.memory))
+                            .font(.body).monospacedDigit()
+                    }
                     Text(sortCPU ? DisplayFormat.memory(workload.memory) : "\(DisplayFormat.percent(workload.cpu)) CPU")
                         .font(.caption).foregroundStyle(.secondary).monospacedDigit()
                 }

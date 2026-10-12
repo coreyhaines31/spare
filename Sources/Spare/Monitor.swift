@@ -32,6 +32,10 @@ final class Monitor: ObservableObject {
     var onOpenRecap: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
     @Published var awaitingAccessibility = false
+    @Published var idleApps: [IdleApp] = []
+    private let activityLog = AppActivityLog()
+    /// Every process from the latest reading, for tracing what launched a session.
+    private(set) var processTable: [Int32: ProcessRecord] = [:]
     private var accessibilityPoll: Timer?
     var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
 
@@ -52,6 +56,8 @@ final class Monitor: ObservableObject {
     private let queue = DispatchQueue(label: "com.spareformac.sampler", qos: .utility)
     private let sampler = Sampler()
     private let resolver = ProjectResolver()
+    /// Separate from `resolver`, which the sampling queue uses.
+    private let originResolver = ProjectResolver()
     private var timer: Timer?
     private var lastAlert = Date.distantPast
     private var busy = false
@@ -63,8 +69,13 @@ final class Monitor: ObservableObject {
         let center = NSWorkspace.shared.notificationCenter
         sleepObservers = [
             center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(true) },
-            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(false) }
+            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(false) },
+            center.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+                if let path = app?.bundleURL?.path { self?.activityLog.recordActivation(appPath: path) }
+            }
         ]
+        if let path = NSWorkspace.shared.frontmostApplication?.bundleURL?.path { activityLog.recordActivation(appPath: path) }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.refresh() }
     }
@@ -105,9 +116,16 @@ final class Monitor: ObservableObject {
                 }
                 error = nil
                 workloads = grouped
+                processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
                 memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
+                activityLog.markWatching()
+                idleApps = ready ? IdleApps.find(grouped) { [activityLog] workload in
+                    guard let path = workload.appPath, let pid = workload.appIdentity?.pid,
+                          let app = NSRunningApplication(processIdentifier: pid), !app.isActive else { return nil }
+                    return activityLog.idleTime(appPath: path, launched: app.launchDate)
+                } : []
                 samples.append(snapshot.system)
                 if samples.count > 300 { samples.removeFirst(samples.count - 300) }
                 history.record(samples: samples, workloads: grouped, ready: ready)
@@ -167,6 +185,8 @@ final class Monitor: ObservableObject {
     }
 
     func clearRecaps() {
+        activityLog.clear()
+        idleApps = []
         queue.async { [self] in
             if recapStore.clear() {
                 awayTracker.clear()
@@ -263,6 +283,27 @@ final class Monitor: ObservableObject {
     func cancelAccessibilityWait() {
         accessibilityPoll?.invalidate()
         awaitingAccessibility = false
+    }
+
+    /// What launched each session, computed together so the running-app list is read once.
+    func origins(of processes: [ProcessRecord]) -> [ProcessIdentity: SessionOrigin] {
+        guard !processes.isEmpty else { return [:] }
+        let apps = Dictionary(NSWorkspace.shared.runningApplications.compactMap { app in
+            app.localizedName.map { (app.processIdentifier, $0) }
+        }, uniquingKeysWith: { first, _ in first })
+        let arguments: (Int32) -> [String] = { pid in self.processTable[pid].map { ProcessArguments.cached(for: $0.identity) } ?? [] }
+        return Dictionary(processes.map { process in
+            (process.identity, SessionOrigin.find(for: process, in: processTable, apps: apps, arguments: arguments,
+                                                  project: originResolver.project))
+        }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// Ends several separate sessions after one review.
+    func endSessions(_ processes: [ProcessRecord], in workload: Workload) {
+        let ended = processes.filter { $0.identity != workload.appIdentity && spare_stop($0.identity.pid, $0.identity.started) == 0 }.count
+        notice = ended == processes.count
+            ? "Closed \(ended) separate session\(ended == 1 ? "" : "s") of \(workload.name). Their windows are closing."
+            : "Closed \(ended) of \(processes.count) sessions. The rest had already exited or couldn’t be ended."
     }
 
     /// Ends one tab, extension, or separate-session process inside an app after the person reviewed it.
