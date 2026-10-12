@@ -270,13 +270,17 @@ final class Monitor: ObservableObject {
         awaitingAccessibility = false
     }
 
-    func origin(of process: ProcessRecord) -> SessionOrigin {
+    /// What launched each session, computed together so the running-app list is read once.
+    func origins(of processes: [ProcessRecord]) -> [ProcessIdentity: SessionOrigin] {
+        guard !processes.isEmpty else { return [:] }
         let apps = Dictionary(NSWorkspace.shared.runningApplications.compactMap { app in
             app.localizedName.map { (app.processIdentifier, $0) }
         }, uniquingKeysWith: { first, _ in first })
-        return SessionOrigin.find(for: process, in: processTable, apps: apps,
-                                  arguments: { pid in self.processTable[pid].map { ProcessArguments.cached(for: $0.identity) } ?? [] },
-                                  project: originResolver.project)
+        let arguments: (Int32) -> [String] = { pid in self.processTable[pid].map { ProcessArguments.cached(for: $0.identity) } ?? [] }
+        return Dictionary(processes.map { process in
+            (process.identity, SessionOrigin.find(for: process, in: processTable, apps: apps, arguments: arguments,
+                                                  project: originResolver.project))
+        }, uniquingKeysWith: { first, _ in first })
     }
 
     /// Ends several separate sessions after one review.
