@@ -36,10 +36,11 @@ Paste this into Claude Code, Codex, or another coding agent:
 ```text
 Install Spare, the free open-source macOS menu bar app from https://github.com/coreyhaines31/spare.
 1. Check this Mac is Apple silicon (`uname -m` prints arm64) on macOS 14 or later (`sw_vers -productVersion`). If not, stop and tell me Spare isn't supported.
-2. If Homebrew is installed, run: brew install --cask coreyhaines31/tap/spare
-3. Otherwise, download the -arm64.dmg asset from the latest release at https://github.com/coreyhaines31/spare/releases/latest, mount it, copy Spare.app into /Applications, and unmount it.
-4. Open Spare with: open /Applications/Spare.app
-5. Confirm it's running (pgrep -x Spare), then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
+2. If /Applications/Spare.app already exists, Spare is installed and updates itself; skip to step 5.
+3. If Homebrew is installed, run: brew install --cask coreyhaines31/tap/spare
+4. Otherwise, download the -arm64.dmg asset from the latest release at https://github.com/coreyhaines31/spare/releases/latest, mount it, copy Spare.app into /Applications, and unmount it.
+5. Open Spare with: open /Applications/Spare.app
+6. Confirm it's running (pgrep -x Spare), then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
 ```
 
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
