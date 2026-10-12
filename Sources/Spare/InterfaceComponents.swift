@@ -42,7 +42,9 @@ struct WorkloadRow: View {
                 WorkloadIcon(workload: workload)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
-                    Text(workload.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text([workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:))]
+                        .compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 3) {

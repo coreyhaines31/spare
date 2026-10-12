@@ -34,8 +34,16 @@ struct WorkloadDetail: View {
                     section("Project", DisplayFormat.homePath(path))
                     Button("Show in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }.buttonStyle(.link)
                 }
+                if let command = workload.commandSummary(arguments: ProcessArguments.cached(for:)) {
+                    section("Command", command)
+                }
                 if !workload.ports.isEmpty {
                     section("Local server ports", workload.ports.map(String.init).joined(separator: ", ") + " · Listening on this Mac")
+                    ForEach(workload.webPorts, id: \.self) { port in
+                        if let url = URL(string: "http://localhost:\(port)") {
+                            Link("Open localhost:\(port)", destination: url).font(.callout)
+                        }
+                    }
                 }
                 section("Before closing", workload.consequence)
                 if review == nil && workload.sessions.count > 1 {
