@@ -7,7 +7,6 @@ struct AppHelpersSection: View {
     @ObservedObject var monitor: Monitor
     @State private var showAll = false
     @State private var confirming: ProcessIdentity?
-    @State private var waitingForPermission = false
     @State private var menuUnavailable = false
     @State private var memorySaver = ChromeMemorySaver.unknown
     private let collapsedCount = 8
@@ -48,17 +47,16 @@ struct AppHelpersSection: View {
             Button { openTaskManager(pid: pid) } label: { Label("Open Chrome’s Task Manager", systemImage: "list.bullet.rectangle") }
             Text("It names the tab behind each process. Click the Memory footprint column to sort, then End process.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if waitingForPermission {
+            if monitor.awaitingAccessibility {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Turn on Spare in Accessibility settings. Chrome’s Task Manager opens as soon as you do. Spare only uses this permission to choose that menu item.")
                         .font(.caption).fixedSize(horizontal: false, vertical: true)
                     HStack {
                         Button("Open Accessibility Settings") { ChromeShortcuts.openAccessibilitySettings() }
-                        Button("Cancel") { waitingForPermission = false }.buttonStyle(.link)
+                        Button("Cancel") { monitor.cancelAccessibilityWait() }.buttonStyle(.link)
                     }.controlSize(.small)
                 }
                 .padding(10).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
-                .task(id: waitingForPermission) { await waitForPermission(pid: pid) }
             } else if menuUnavailable {
                 Text("Couldn’t reach that menu. In Chrome, choose Window → Task Manager.")
                     .font(.caption).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true)
@@ -79,24 +77,7 @@ struct AppHelpersSection: View {
     }
 
     private func openTaskManager(pid: Int32) {
-        switch ChromeShortcuts.openTaskManager(pid: pid) {
-        case .opened: waitingForPermission = false; menuUnavailable = false
-        case .needsPermission:
-            waitingForPermission = true
-        case .notFound: waitingForPermission = false; menuUnavailable = true
-        }
-    }
-
-    /// Checks for the permission for up to two minutes, then opens the Task Manager without another click.
-    private func waitForPermission(pid: Int32) async {
-        for _ in 0..<120 {
-            try? await Task.sleep(for: .seconds(1))
-            guard waitingForPermission, !Task.isCancelled else { return }
-            if ChromeShortcuts.isTrusted {
-                openTaskManager(pid: pid)
-                return
-            }
-        }
+        menuUnavailable = monitor.openChromeTaskManager(pid: pid) == .notFound
     }
 
     private var memorySaverTip: String? {
