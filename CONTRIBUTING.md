@@ -70,4 +70,4 @@ A few principles keep Spare trustworthy:
 TEAM_ID=… DEVELOPMENT_IDENTITY="Apple Development: …" NOTARY_PROFILE=… bash scripts/release.sh
 ```
 
-Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist` first, and release from `main`. The script doesn't publish anything. Create the GitHub release with the DMG, `appcast.xml`, and `SHA256SUMS.txt` attached; the app reads its update feed from the latest release.
+Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist` first, and release from `main`. The script doesn't publish anything. Create the GitHub release with the DMG, `appcast.xml`, and `SHA256SUMS.txt` attached; the app reads its update feed from the latest release. Then run `bash scripts/update-homebrew-cask.sh <version>` to point the Homebrew cask at it.

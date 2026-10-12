@@ -17,6 +17,32 @@ Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 2. Open it and drag **Spare** into your **Applications** folder.
 3. Open Spare from Applications or Spotlight. Releases are signed and notarized by Apple; if macOS asks whether you're sure you want to open an app downloaded from the internet, choose **Open**.
 
+Or install with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask coreyhaines31/tap/spare
+```
+
+Or without Homebrew, from Terminal:
+
+```sh
+curl -fsSL -o /tmp/Spare.dmg "$(curl -fsSL https://api.github.com/repos/coreyhaines31/spare/releases/latest | grep -o 'https://[^"]*-arm64\.dmg' | head -1)" && hdiutil attach -nobrowse -quiet /tmp/Spare.dmg -mountpoint /tmp/spare-dmg && ditto /tmp/spare-dmg/Spare.app /Applications/Spare.app && hdiutil detach -quiet /tmp/spare-dmg && open /Applications/Spare.app
+```
+
+### Install with an AI coding agent
+
+Paste this into Claude Code, Codex, or another coding agent:
+
+```text
+Install Spare, the free open-source macOS menu bar app from https://github.com/coreyhaines31/spare.
+1. Check this Mac is Apple silicon (`uname -m` prints arm64) on macOS 14 or later (`sw_vers -productVersion`). If not, stop and tell me Spare isn't supported.
+2. If /Applications/Spare.app already exists, Spare is installed and updates itself; skip to step 5.
+3. If Homebrew is installed, run: brew install --cask coreyhaines31/tap/spare
+4. Otherwise, download the -arm64.dmg asset from the latest release at https://github.com/coreyhaines31/spare/releases/latest, mount it, copy Spare.app into /Applications, and unmount it.
+5. Open Spare with: open /Applications/Spare.app
+6. Confirm it's running (pgrep -x Spare), then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
+```
+
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
 
 ## First launch
