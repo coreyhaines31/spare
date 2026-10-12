@@ -26,6 +26,9 @@ struct WorkloadDetail: View {
                 }.font(.body).padding(.vertical, 10)
                 Divider()
                 Text(review != nil ? "Reviewing a fixed set of processes. New processes won’t be included." : latest == nil ? "This item is no longer detected. Readings below are its last captured values." : "Live readings · Updated every 3 seconds").font(.caption).foregroundStyle(.secondary)
+                if review == nil && workload.kind == .application && workload.processes.count > 1 {
+                    AppHelpersSection(workload: workload, monitor: monitor)
+                }
                 section("About", workload.explanation)
                 if let path = workload.projectPath {
                     section("Project", DisplayFormat.homePath(path))
