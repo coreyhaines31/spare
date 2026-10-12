@@ -1,0 +1,31 @@
+name: Bug report
+description: Something in Spare isn't working the way you expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect to see instead?
+    validations:
+      required: true
+  - type: input
+    id: spare-version
+    attributes:
+      label: Spare version
+      description: Gear menu → Check for Updates… shows it.
+      placeholder: "0.13.0"
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.5"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: If you can, list what you did right before it happened.
