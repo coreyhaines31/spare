@@ -32,6 +32,8 @@ final class Monitor: ObservableObject {
     var onOpenRecap: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
     @Published var awaitingAccessibility = false
+    @Published var idleApps: [IdleApp] = []
+    private let activityLog = AppActivityLog()
     /// Every process from the latest reading, for tracing what launched a session.
     private(set) var processTable: [Int32: ProcessRecord] = [:]
     private var accessibilityPoll: Timer?
@@ -67,8 +69,13 @@ final class Monitor: ObservableObject {
         let center = NSWorkspace.shared.notificationCenter
         sleepObservers = [
             center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(true) },
-            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(false) }
+            center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.sleepChanged(false) },
+            center.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+                if let path = app?.bundleURL?.path { self?.activityLog.recordActivation(appPath: path) }
+            }
         ]
+        if let path = NSWorkspace.shared.frontmostApplication?.bundleURL?.path { activityLog.recordActivation(appPath: path) }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.refresh() }
     }
@@ -113,6 +120,12 @@ final class Monitor: ObservableObject {
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
                 memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
+                activityLog.markWatching()
+                idleApps = ready ? IdleApps.find(grouped) { [activityLog] workload in
+                    guard let path = workload.appPath, let pid = workload.appIdentity?.pid,
+                          let app = NSRunningApplication(processIdentifier: pid), !app.isActive else { return nil }
+                    return activityLog.idleTime(appPath: path, launched: app.launchDate)
+                } : []
                 samples.append(snapshot.system)
                 if samples.count > 300 { samples.removeFirst(samples.count - 300) }
                 history.record(samples: samples, workloads: grouped, ready: ready)
@@ -172,6 +185,8 @@ final class Monitor: ObservableObject {
     }
 
     func clearRecaps() {
+        activityLog.clear()
+        idleApps = []
         queue.async { [self] in
             if recapStore.clear() {
                 awayTracker.clear()
