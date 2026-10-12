@@ -13,6 +13,7 @@ final class SessionOriginTests: XCTestCase {
         XCTAssertEqual(CommandSummary.make(["npm exec clipatra@latest serve", "--port", "1"]), "clipatra serve")
         XCTAssertEqual(CommandSummary.make(["npm exec slack-mcp-server@latest --transport stdio"]), "slack-mcp-server")
         XCTAssertEqual(CommandSummary.make(["npx", "@modelcontextprotocol/server-github@1.2.0"]), "@modelcontextprotocol/server-github")
+        XCTAssertEqual(CommandSummary.make(["node", "server.js", "token=abc123"]), "server")
         XCTAssertNil(CommandSummary.make([]))
     }
 

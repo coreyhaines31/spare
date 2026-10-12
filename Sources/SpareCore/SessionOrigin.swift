@@ -23,7 +23,7 @@ public enum CommandSummary {
         rest = rest.dropFirst()
         var words = [program(first).replacingOccurrences(of: #"@[^/@]+$"#, with: "", options: .regularExpression)]
         for argument in rest.prefix(2) {
-            guard !argument.hasPrefix("-"), !argument.contains("/"), argument.count <= 24 else { break }
+            guard !argument.hasPrefix("-"), !argument.contains("/"), !argument.contains("="), argument.count <= 24 else { break }
             words.append(argument)
         }
         return words.joined(separator: " ").trimmingCharacters(in: .whitespaces)
