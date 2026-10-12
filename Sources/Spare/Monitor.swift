@@ -265,16 +265,21 @@ final class Monitor: ObservableObject {
         awaitingAccessibility = false
     }
 
-    /// Ends one tab or extension process inside an app after the person reviewed it.
+    /// Ends one tab, extension, or separate-session process inside an app after the person reviewed it.
     func endHelper(_ process: ProcessRecord, role: HelperRole, in workload: Workload) {
         guard workload.kind == .application, role.canEnd, process.identity != workload.appIdentity else { return }
-        let result = spare_stop(process.identity.pid, process.identity.started)
-        if result == 0 {
-            trackStop("\(workload.name) \(role.label(browser: ProcessClassifier.isBrowser(workload.name)).lowercased())", identities: [process.identity])
-            notice = "Ended one \(role.label(browser: ProcessClassifier.isBrowser(workload.name)).lowercased()) process in \(workload.name). Its memory is released once macOS confirms it has exited."
-        } else {
+        guard spare_stop(process.identity.pid, process.identity.started) == 0 else {
             notice = "That process has already exited or macOS didn’t allow Spare to end it."
+            return
         }
+        let browser = ProcessClassifier.isBrowser(workload.name)
+        let effect: String
+        switch role {
+        case .page: effect = browser ? "The tabs it ran now show a reload page." : "The window it ran may reload."
+        case .extensionHost: effect = "The extension is off until \(workload.name) restarts it."
+        default: effect = "Its windows are closing."
+        }
+        notice = "Ended a \(role.label(browser: browser).lowercased()) process in \(workload.name). \(effect)"
     }
 
     private func trackStop(_ name: String, identities: Set<ProcessIdentity>) {
