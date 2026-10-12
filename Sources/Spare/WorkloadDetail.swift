@@ -30,6 +30,7 @@ struct WorkloadDetail: View {
                     AppHelpersSection(workload: workload, monitor: monitor)
                 }
                 section("About", workload.explanation)
+                if DockerSettings.isDocker(workload) { dockerSection }
                 if let path = workload.projectPath {
                     section("Project", DisplayFormat.homePath(path))
                     Button("Show in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }.buttonStyle(.link)
@@ -105,6 +106,21 @@ struct WorkloadDetail: View {
             }.padding(16)
         }
     }
+    private var dockerSection: some View {
+        let physical = monitor.samples.last?.physical ?? ProcessInfo.processInfo.physicalMemory
+        let limit = DockerSettings.memoryLimit(physical: physical)
+        return VStack(alignment: .leading, spacing: 7) {
+            Text("Docker’s memory").font(.headline)
+            Text("Docker Desktop runs your containers inside one Linux virtual machine. That VM can use up to \(DisplayFormat.memory(limit.bytes))\(limit.isDefault ? ", Docker’s default of half your Mac’s memory" : ""). Stopping containers you don’t need frees memory, and Docker’s Resource Saver shuts the VM down after a few idle minutes.")
+                .font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text("To lower the limit: Docker Desktop → Settings → Resources → Advanced.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let docker = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.docker.docker") {
+                Button("Open Docker Desktop") { NSWorkspace.shared.open(docker) }
+            }
+        }
+    }
+
     private func section(_ heading: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text(heading).font(.headline)
