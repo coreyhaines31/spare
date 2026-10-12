@@ -34,6 +34,7 @@ struct NativeSearchField: NSViewRepresentable {
 struct WorkloadRow: View {
     let workload: Workload
     let sortCPU: Bool
+    var note: String?
     let select: () -> Void
     @State private var hovered = false
     var body: some View {
@@ -42,7 +43,7 @@ struct WorkloadRow: View {
                 WorkloadIcon(workload: workload)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
-                    Text([workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:))]
+                    Text([workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:)), note]
                         .compactMap { $0 }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
