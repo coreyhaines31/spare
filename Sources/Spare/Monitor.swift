@@ -32,6 +32,8 @@ final class Monitor: ObservableObject {
     var onOpenRecap: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
     @Published var awaitingAccessibility = false
+    /// Every process from the latest reading, for tracing what launched a session.
+    private(set) var processTable: [Int32: ProcessRecord] = [:]
     private var accessibilityPoll: Timer?
     var launchesAtLogin: Bool { loginStatus == .enabled || loginStatus == .requiresApproval }
 
@@ -52,6 +54,8 @@ final class Monitor: ObservableObject {
     private let queue = DispatchQueue(label: "com.spareformac.sampler", qos: .utility)
     private let sampler = Sampler()
     private let resolver = ProjectResolver()
+    /// Separate from `resolver`, which the sampling queue uses.
+    private let originResolver = ProjectResolver()
     private var timer: Timer?
     private var lastAlert = Date.distantPast
     private var busy = false
@@ -105,6 +109,7 @@ final class Monitor: ObservableObject {
                 }
                 error = nil
                 workloads = grouped
+                processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
                 memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
@@ -263,6 +268,23 @@ final class Monitor: ObservableObject {
     func cancelAccessibilityWait() {
         accessibilityPoll?.invalidate()
         awaitingAccessibility = false
+    }
+
+    func origin(of process: ProcessRecord) -> SessionOrigin {
+        let apps = Dictionary(NSWorkspace.shared.runningApplications.compactMap { app in
+            app.localizedName.map { (app.processIdentifier, $0) }
+        }, uniquingKeysWith: { first, _ in first })
+        return SessionOrigin.find(for: process, in: processTable, apps: apps,
+                                  arguments: { pid in self.processTable[pid].map { ProcessArguments.cached(for: $0.identity) } ?? [] },
+                                  project: originResolver.project)
+    }
+
+    /// Ends several separate sessions after one review.
+    func endSessions(_ processes: [ProcessRecord], in workload: Workload) {
+        let ended = processes.filter { $0.identity != workload.appIdentity && spare_stop($0.identity.pid, $0.identity.started) == 0 }.count
+        notice = ended == processes.count
+            ? "Closed \(ended) separate session\(ended == 1 ? "" : "s") of \(workload.name). Their windows are closing."
+            : "Closed \(ended) of \(processes.count) sessions. The rest had already exited or couldn’t be ended."
     }
 
     /// Ends one tab, extension, or separate-session process inside an app after the person reviewed it.

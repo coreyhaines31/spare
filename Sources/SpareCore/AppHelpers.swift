@@ -85,6 +85,17 @@ public enum HelperRole {
 }
 
 public enum ProcessArguments {
+    private static var cache: [ProcessIdentity: [String]] = [:]
+
+    /// Launch arguments don't change for a process's lifetime, so each is read once. Call from the main thread.
+    public static func cached(for identity: ProcessIdentity) -> [String] {
+        if let cached = cache[identity] { return cached }
+        if cache.count > 4000 { cache.removeAll() }
+        let arguments = read(pid: identity.pid)
+        cache[identity] = arguments
+        return arguments
+    }
+
     /// Reads a process's launch arguments. Returns an empty list when macOS doesn't allow it.
     public static func read(pid: Int32) -> [String] {
         var mib = [CTL_KERN, KERN_PROCARGS2, pid]

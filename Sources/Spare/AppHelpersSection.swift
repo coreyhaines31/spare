@@ -9,6 +9,7 @@ struct AppHelpersSection: View {
     @State private var confirming: ProcessIdentity?
     @State private var explaining: ProcessIdentity?
     @State private var sort = HelperSort.memory
+    @State private var closingSessions: [ProcessRecord]?
     @State private var menuUnavailable = false
     @State private var memorySaver = ChromeMemorySaver.unknown
     private let collapsedCount = 8
@@ -17,7 +18,7 @@ struct AppHelpersSection: View {
     private var helpers: [(process: ProcessRecord, role: HelperRole)] {
         let mainPath = workload.processes.first { $0.identity == workload.appIdentity }?.path ?? ""
         let classified = workload.processes.map { process in
-            (process: process, role: HelperRole.classify(name: process.name, arguments: ArgumentCache.arguments(for: process.identity),
+            (process: process, role: HelperRole.classify(name: process.name, arguments: ProcessArguments.cached(for: process.identity),
                                                          isMain: process.identity == workload.appIdentity,
                                                          path: process.path, mainPath: mainPath))
         }
@@ -49,6 +50,7 @@ struct AppHelpersSection: View {
                       systemImage: "lightbulb").font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            sessionActions(all.filter { $0.role == .session }.map(\.process))
             Picker("Sort by", selection: $sort) {
                 ForEach(HelperSort.allCases) { Text($0.rawValue).tag($0) }
             }.pickerStyle(.segmented).controlSize(.small)
@@ -109,12 +111,47 @@ struct AppHelpersSection: View {
         }
     }
 
+    @ViewBuilder private func sessionActions(_ sessions: [ProcessRecord]) -> some View {
+        if sessions.count > 1 {
+            let leftovers = sessions.filter { monitor.origin(of: $0).isUnattended }
+            if let closing = closingSessions {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Close \(closing.count) separate session\(closing.count == 1 ? "" : "s")? \(HelperRole.session.consequence(browser: browser))")
+                        .font(.caption).fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Button("Cancel") { closingSessions = nil }.keyboardShortcut(.cancelAction)
+                        Spacer()
+                        Button("Close sessions", role: .destructive) {
+                            monitor.endSessions(closing, in: workload)
+                            closingSessions = nil
+                        }.buttonStyle(.borderedProminent).tint(.red).controlSize(.small)
+                    }
+                }.padding(10).background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+            } else {
+                HStack {
+                    if !leftovers.isEmpty {
+                        Button("Close \(leftovers.count) background session\(leftovers.count == 1 ? "" : "s")…") { closingSessions = leftovers }
+                    }
+                    if leftovers.count != sessions.count {
+                        Button("Close all \(sessions.count) sessions…") { closingSessions = sessions }
+                    }
+                }.controlSize(.small)
+            }
+        }
+    }
+
     private func row(_ process: ProcessRecord, _ role: HelperRole) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(role == .main ? "\(workload.name) itself" : role.label(browser: browser)).font(.callout.weight(.medium))
-                    Text(verbatim: "PID \(process.identity.pid)").font(.caption2).foregroundStyle(.secondary)
+                    if role == .session {
+                        let origin = monitor.origin(of: process)
+                        Text(origin.description).font(.caption2).lineLimit(1)
+                            .foregroundStyle(origin.isUnattended ? Color.orange : Color.secondary)
+                    } else {
+                        Text(verbatim: "PID \(process.identity.pid)").font(.caption2).foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
@@ -158,18 +195,5 @@ struct AppHelpersSection: View {
         return totals.sorted { $0.value.memory > $1.value.memory }
             .map { "\($0.key): \($0.value.count) · \(DisplayFormat.memory($0.value.memory))" }
             .joined(separator: "\n")
-    }
-}
-
-/// Launch arguments don't change for a process's lifetime, so each is read once.
-private enum ArgumentCache {
-    private static var cache: [ProcessIdentity: [String]] = [:]
-
-    static func arguments(for identity: ProcessIdentity) -> [String] {
-        if let cached = cache[identity] { return cached }
-        if cache.count > 4000 { cache.removeAll() }
-        let arguments = ProcessArguments.read(pid: identity.pid)
-        cache[identity] = arguments
-        return arguments
     }
 }
