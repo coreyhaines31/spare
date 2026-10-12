@@ -25,9 +25,14 @@ public enum ProcessClassifier {
         return "AI agent"
     }
 
+    public static func isBrowser(_ name: String) -> Bool {
+        let lower = name.lowercased()
+        return ["chrome", "safari", "firefox", "arc", "brave", "edge"].contains(where: lower.contains)
+    }
+
     public static func appExplanation(_ name: String) -> (String, String) {
         let lower = name.lowercased()
-        if ["chrome", "safari", "firefox", "arc", "brave", "edge"].contains(where: lower.contains) {
+        if isBrowser(name) {
             return ("Your browser and its background helpers. Tabs, extensions, and video can all contribute to this total.",
                     "Quitting closes this browser's windows and interrupts downloads. Save anything unfinished first. Spare cannot identify individual tabs yet.")
         }

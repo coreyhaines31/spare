@@ -236,6 +236,18 @@ final class Monitor: ObservableObject {
             notice = "Stop requested for \(sent) of \(total) processes. Others may have exited or could not be stopped."
         }
     }
+    /// Ends one tab or extension process inside an app after the person reviewed it.
+    func endHelper(_ process: ProcessRecord, role: HelperRole, in workload: Workload) {
+        guard workload.kind == .application, role.canEnd, process.identity != workload.appIdentity else { return }
+        let result = spare_stop(process.identity.pid, process.identity.started)
+        if result == 0 {
+            trackStop("\(workload.name) \(role.label(browser: ProcessClassifier.isBrowser(workload.name)).lowercased())", identities: [process.identity])
+            notice = "Ended one \(role.label(browser: ProcessClassifier.isBrowser(workload.name)).lowercased()) process in \(workload.name). Its memory is released once macOS confirms it has exited."
+        } else {
+            notice = "That process has already exited or macOS didn’t allow Spare to end it."
+        }
+    }
+
     private func trackStop(_ name: String, identities: Set<ProcessIdentity>) {
         pendingStop = (name, StopFollowUp(identities: identities, now: ProcessInfo.processInfo.systemUptime))
     }
