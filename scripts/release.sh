@@ -16,6 +16,7 @@ export RELEASE_DIR TEAM_ID DEVELOPMENT_IDENTITY
 ARCHIVE="$RELEASE_DIR/Spare.xcarchive"
 mkdir -p "$ARCHIVE/Products/Applications"
 ditto dist/Spare.app "$ARCHIVE/Products/Applications/Spare.app"
+codesign --force --sign "$DEVELOPMENT_IDENTITY" --options runtime --timestamp "$ARCHIVE/Products/Applications/Spare.app/Contents/MacOS/spare-cli"
 codesign --force --sign "$DEVELOPMENT_IDENTITY" --options runtime --timestamp "$ARCHIVE/Products/Applications/Spare.app"
 python3 - <<'PY'
 import datetime
