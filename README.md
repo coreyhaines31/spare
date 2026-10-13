@@ -6,6 +6,13 @@
 
 Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/spare-dark.png">
+    <img src="docs/images/spare-light.png" width="440" alt="The Spare panel showing CPU in use, normal memory pressure, an idle app, and a list of apps, projects, and agents sorted by memory">
+  </picture>
+</p>
+
 ## Requirements
 
 - An Apple-silicon Mac (M1 or later). Intel Macs aren't supported.
