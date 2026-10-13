@@ -81,7 +81,7 @@ extension Monitor {
         let verb = workload.kind == .application ? "Quit" : "Stop"
         present(PendingRequest(
             message: message, title: "\(verb) \(workload.name)?",
-            detail: "\(requester(message)) asked to \(verb.lowercased()) \(workload.name), which is using \(DisplayFormat.memory(workload.memory)). \(workload.consequence)",
+            detail: "\(requester(message)) asked Spare to \(verb.lowercased()) \(workload.name), which is using \(DisplayFormat.memory(workload.memory)). \(workload.consequence)",
             action: verb
         ) { [weak self] in
             guard let self, let current = workload.current(in: self.workloads), current.canStop else {
@@ -102,7 +102,7 @@ extension Monitor {
         let identities = Set(found.map(\.process.identity))
         present(PendingRequest(
             message: message, title: "Close \(count)?",
-            detail: "\(requester(message)) asked to close \(count) of \(apps), using \(DisplayFormat.memory(memory)). "
+            detail: "\(requester(message)) asked Spare to close \(count) of \(apps), using \(DisplayFormat.memory(memory)). "
                 + "Nothing is using them anymore. \(HelperRole.session.consequence(browser: true))",
             action: "Close"
         ) { [weak self] in
@@ -126,7 +126,7 @@ extension Monitor {
     }
 
     private func requester(_ message: CommandRequest.Message) -> String {
-        message.requester.map { "\($0) (from the command line)" } ?? "A command-line tool"
+        message.requester ?? "A command-line tool"
     }
 
     private func present(_ request: PendingRequest) {
