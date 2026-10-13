@@ -139,7 +139,7 @@ public enum TextTable {
                 let padding = String(repeating: " ", count: widths[index] - cell.count)
                 if rightAligned.contains(index) { return padding + cell }
                 return index == row.count - 1 ? cell : cell + padding
-            }.joined(separator: "  ")
+            }.joined(separator: "  ").replacingOccurrences(of: #"\s+$"#, with: "", options: .regularExpression)
         }.joined(separator: "\n")
     }
 }

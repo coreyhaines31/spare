@@ -40,6 +40,8 @@ public enum CommandRequest {
     }
 
     public enum Outcome: String {
+        /// The app is showing the request and waiting for the person; a final reply follows.
+        case waiting
         case approved, declined, busy, ambiguous
         case notFound = "not-found"
         case notAllowed = "not-allowed"

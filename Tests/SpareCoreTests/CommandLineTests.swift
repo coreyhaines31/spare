@@ -59,12 +59,12 @@ final class CommandLineTests: XCTestCase {
     }
 
     func testTableAlignsColumnsAndClipsLongCells() {
-        let table = TextTable.render([["NAME", "MEMORY"], ["Slack", "900 MB"], ["Google Chrome for Testing", "1.2 GB"]],
+        let table = TextTable.render([["NAME", "MEMORY", ""], ["Slack", "900 MB", ""], ["Google Chrome for Testing", "1.2 GB", "x"]],
                                      rightAligned: [1], maxWidth: [0: 10])
         XCTAssertEqual(table, """
         NAME        MEMORY
         Slack       900 MB
-        Google Ch…  1.2 GB
+        Google Ch…  1.2 GB  x
         """)
     }
 
@@ -85,6 +85,10 @@ final class CommandLineTests: XCTestCase {
         XCTAssertEqual(leftovers.map(\.process.identity.pid), [60])
         XCTAssertEqual(leftovers.first?.memory, 250)
         XCTAssertEqual(leftovers.first?.origin, .leftover)
+        // Other apps run extra copies of themselves as services; those aren't sessions.
+        let service = WorkloadGrouper.group(processes.map { var copy = $0; copy.path = copy.path.replacingOccurrences(of: "Chrome", with: "Docker"); return copy },
+                                            apps: [AppRecord(pid: 50, name: "Docker", path: "/Apps/Docker.app", canQuit: true)])
+        XCTAssertTrue(Leftovers.find(service, records: records, apps: [50: "Docker"]) { _ in ["--flag"] }.isEmpty)
     }
 
     func testRequesterNamesTheAgentAndFolder() {
