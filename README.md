@@ -76,7 +76,7 @@ The first readings appear within a few seconds. Spare doesn't need any permissio
 - **Apps** appear with all their helper processes counted together, so Chrome is one line instead of 50.
 - **Projects** are local dev servers and tools grouped by folder, with the command and port, like *website · port 3000 · next dev*.
 - **Agents** such as Claude Code, Codex, Aider, Ollama, and OpenCode are grouped by the folder they're working in.
-- **macOS** processes like WindowServer and kernel_task are labeled with a plain explanation and are never offered for stopping.
+- **macOS** processes like WindowServer and mds_stores are labeled with a plain explanation and are never offered for stopping.
 
 Use the filters, search by name, folder, or port, and sort by memory or CPU.
 
