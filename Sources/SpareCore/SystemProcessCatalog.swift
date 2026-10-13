@@ -9,8 +9,12 @@ public enum SystemProcessCatalog {
 
     /// Matches by name only for executables macOS ships, so a look-alike elsewhere stays unidentified.
     public static func entry(for process: ProcessRecord) -> Entry? {
-        let shipped = ["/System/", "/usr/libexec/", "/usr/sbin/", "/usr/bin/", "/sbin/"].contains(where: process.path.hasPrefix) || process.identity.pid == 0
-        return shipped ? entries[process.name] : nil
+        isShipped(process.path) || process.identity.pid == 0 ? entries[process.name] : nil
+    }
+
+    /// Locations only macOS installs to. `/Library/Apple/System` holds XProtect, which updates separately.
+    public static func isShipped(_ path: String) -> Bool {
+        ["/System/", "/usr/libexec/", "/usr/sbin/", "/usr/bin/", "/sbin/", "/Library/Apple/System/"].contains(where: path.hasPrefix)
     }
 
     static let entries: [String: Entry] = [

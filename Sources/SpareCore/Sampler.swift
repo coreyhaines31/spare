@@ -55,6 +55,25 @@ public final class Sampler {
             }
             processes.append(record)
         }
+        // Shipped system processes outside your account, measured the same way but with resident memory as the estimate.
+        let readable = Set(processes.map(\.identity.pid))
+        for row in OtherAccountProcesses.read() where !readable.contains(row.pid) && SystemProcessCatalog.isShipped(row.path) {
+            var started: UInt64 = 0
+            guard spare_start_time(row.pid, &started) else { continue }
+            let identity = ProcessIdentity(pid: row.pid, started: started)
+            let cpuNanoseconds = UInt64(row.cpuSeconds * 1_000_000_000)
+            var usage = 0.0
+            if ready, let old = previous[identity], cpuNanoseconds >= old {
+                usage = min(100, Double(cpuNanoseconds - old) / (elapsed * 1_000_000_000 * cores) * 100)
+            }
+            let record = ProcessRecord(pid: row.pid, started: started, parent: row.parent,
+                                       name: URL(fileURLWithPath: row.path).lastPathComponent, path: row.path,
+                                       memory: row.residentBytes, cpu: usage)
+            // A runtime like /usr/bin/python3 running as root isn't your project, and Spare couldn't stop it.
+            guard ProcessClassifier.developerKind(record) == nil else { continue }
+            counters[identity] = cpuNanoseconds
+            processes.append(record)
+        }
         previous = counters
         return Snapshot(system: SystemSample(cpu: cpu, memory: raw.used, physical: raw.physical,
             compressed: raw.compressed, swap: raw.swap, pressure: MemoryPressure(level: raw.pressure)),

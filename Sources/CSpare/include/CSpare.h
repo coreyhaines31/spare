@@ -18,5 +18,7 @@ bool spare_process(int pid, SpareProcess *output, bool details);
 bool spare_system(SpareSystem *output);
 int spare_ports(int pid, uint16_t *ports, int capacity);
 bool spare_matches(int pid, uint64_t started);
+/// When any process started, including ones outside the user's account.
+bool spare_start_time(int pid, uint64_t *started);
 int spare_stop(int pid, uint64_t started);
 #endif

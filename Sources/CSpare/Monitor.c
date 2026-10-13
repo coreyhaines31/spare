@@ -43,6 +43,16 @@ bool spare_process(int pid, SpareProcess *output, bool details) {
     return true;
 }
 
+bool spare_start_time(int pid, uint64_t *started) {
+    // proc_pidinfo refuses other users' processes; the kern.proc sysctl doesn't.
+    struct kinfo_proc info = {0};
+    size_t size = sizeof(info);
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+    if (sysctl(mib, 4, &info, &size, NULL, 0) != 0 || size == 0) return false;
+    *started = (uint64_t)info.kp_proc.p_starttime.tv_sec * 1000000 + (uint64_t)info.kp_proc.p_starttime.tv_usec;
+    return true;
+}
+
 bool spare_matches(int pid, uint64_t started) {
     SpareProcess process;
     return spare_process(pid, &process, false) && process.started == started;
