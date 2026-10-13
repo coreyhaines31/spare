@@ -36,3 +36,14 @@ final class OtherAccountProcessesTests: XCTestCase {
         XCTAssertTrue(rows.contains { $0.pid == 1 && $0.path == "/sbin/launchd" })
     }
 }
+
+final class SystemProcessCatalogTests: XCTestCase {
+    func testLabelsShippedProcessesOnly() {
+        let xprotect = ProcessRecord(pid: 900, name: "XProtect", path: "/Library/Apple/System/Library/CoreServices/XProtect.app/Contents/MacOS/XProtect")
+        XCTAssertEqual(SystemProcessCatalog.entry(for: xprotect)?.category, "Security and privacy")
+        let resolver = ProcessRecord(pid: 901, name: "mDNSResponder", path: "/usr/sbin/mDNSResponder")
+        XCTAssertEqual(SystemProcessCatalog.entry(for: resolver)?.category, "Networking and devices")
+        let lookalike = ProcessRecord(pid: 902, name: "mDNSResponder", path: "/Users/me/Downloads/mDNSResponder")
+        XCTAssertNil(SystemProcessCatalog.entry(for: lookalike))
+    }
+}
