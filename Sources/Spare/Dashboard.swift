@@ -29,6 +29,10 @@ struct Dashboard: View {
         VStack(spacing: 0) {
             toolbar
             Divider()
+            if let request = monitor.pendingRequest {
+                CommandRequestBanner(request: request, monitor: monitor)
+                Divider()
+            }
             if let selection = path.last {
                 WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
             } else if showingActivity {
