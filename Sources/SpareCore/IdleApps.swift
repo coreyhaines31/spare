@@ -11,11 +11,17 @@ public final class AppActivityLog {
     private var lastActive: [String: Date]
     private var lastMarked = Date.distantPast
 
-    public init(defaults: UserDefaults = .standard, now: Date = Date()) {
+    /// `watchingSince` reads another process's log, such as the running app's from the command line:
+    /// only activations seen since then are trusted, so idle times never count time before it.
+    public init(defaults: UserDefaults = .standard, now: Date = Date(), watchingSince: Date? = nil) {
         self.defaults = defaults
-        started = now
+        started = watchingSince ?? now
         let stored = defaults.dictionary(forKey: key) as? [String: Double] ?? [:]
         lastActive = stored.mapValues { Date(timeIntervalSince1970: $0) }
+        if let watchingSince {
+            trustedSince = watchingSince
+            return
+        }
         let watched = defaults.object(forKey: seenKey) as? Double
         trustedSince = watched.map { now.timeIntervalSince1970 - $0 <= 600 } == true ? .distantPast : now
     }
