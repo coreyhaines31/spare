@@ -7,6 +7,8 @@ BIN_DIR=$(swift build -c release --show-bin-path)
 [ -d dist/Spare.app ] && rm -r dist/Spare.app
 mkdir -p dist/Spare.app/Contents/MacOS dist/Spare.app/Contents/Resources dist/Spare.app/Contents/Frameworks
 cp "$BIN_DIR/Spare" dist/Spare.app/Contents/MacOS/Spare
+# The command-line tool. Not named "spare": it would collide with "Spare" on case-insensitive disks.
+cp "$BIN_DIR/SpareCLI" dist/Spare.app/Contents/MacOS/spare-cli
 ditto "$BIN_DIR/Sparkle.framework" dist/Spare.app/Contents/Frameworks/Sparkle.framework
 install_name_tool -add_rpath @executable_path/../Frameworks dist/Spare.app/Contents/MacOS/Spare
 cp Resources/Info.plist dist/Spare.app/Contents/Info.plist
@@ -14,5 +16,6 @@ mkdir -p dist/Spare.iconset
 swiftc -O scripts/icon/main.swift Sources/Spare/GaugeGlyph.swift -o .build/spare-icon
 .build/spare-icon dist/Spare.iconset
 iconutil -c icns dist/Spare.iconset -o dist/Spare.app/Contents/Resources/Spare.icns
+codesign --force --sign - dist/Spare.app/Contents/MacOS/spare-cli
 codesign --force --sign - dist/Spare.app
 printf 'Built %s/dist/Spare.app\n' "$PWD"

@@ -34,6 +34,7 @@ Useful launch options for a local build:
 ```sh
 open dist/Spare.app --args --window             # open in a window instead of the menu bar panel
 dist/Spare.app/Contents/MacOS/Spare --snapshot  # print one system reading as JSON and exit
+dist/Spare.app/Contents/MacOS/spare-cli list    # the command-line tool from your build
 ```
 
 ## How the code is organized
@@ -43,6 +44,7 @@ dist/Spare.app/Contents/MacOS/Spare --snapshot  # print one system reading as JS
 | `Sources/CSpare` | A small C module that reads processes, memory, and CPU from macOS APIs, and sends stop signals after rechecking a process's identity. |
 | `Sources/SpareCore` | Plain Swift logic with no UI: grouping processes into apps, projects, and agents; helper roles; session origins; recaps; idle apps; health. Almost all tests live here. |
 | `Sources/Spare` | The SwiftUI and AppKit app: the menu bar panel, detail views, the Recap window, and Sparkle updates. |
+| `Sources/SpareCLI` | The `spare` command-line tool, bundled in the app as `Contents/MacOS/spare-cli`. |
 | `Tests/SpareCoreTests` | Unit tests for `SpareCore`. |
 | `scripts` | `bundle.sh` builds the app, `icon/` draws the app icon, `release.sh` makes a signed release. |
 

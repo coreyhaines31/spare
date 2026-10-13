@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
         monitor.onOpenRecap = { [weak self] in self?.showRecap() }
         monitor.onCheckForUpdates = { [weak self] in self?.checkForUpdates() }
+        monitor.onRequest = { [weak self] in self?.showRequest() }
+        monitor.listenForCommands()
         if CommandLine.arguments.contains("--window") { showWindow() }
         else { toggle() }
     }
@@ -39,6 +41,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showWindow()
         return true
+    }
+
+    /// Brings Spare forward so the person sees a request from the command line.
+    private func showRequest() {
+        if let window, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else if !popover.isShown {
+            toggle()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     private func checkForUpdates() {
