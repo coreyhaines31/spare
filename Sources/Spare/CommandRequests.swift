@@ -126,7 +126,7 @@ extension Monitor {
     }
 
     private func requester(_ message: CommandRequest.Message) -> String {
-        message.requester ?? "A command-line tool"
+        message.requester.map { String($0.prefix(60)) } ?? "A command-line tool"
     }
 
     private func present(_ request: PendingRequest) {

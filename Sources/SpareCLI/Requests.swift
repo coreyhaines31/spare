@@ -59,6 +59,8 @@ enum Requests {
             }
         }
         guard let reply else { exit(1) }
+        interrupt.cancel()
+        signal(SIGINT, SIG_DFL)
         switch reply.outcome {
         case .approved:
             Output.note(reply.message)
