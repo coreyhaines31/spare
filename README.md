@@ -2,7 +2,7 @@
 
 **See what's using your Mac.** A free, open-source menu bar app that shows CPU and memory use by the apps, projects, and AI agents you actually recognize, and helps you decide what's safe to close.
 
-[Download Spare 0.13.0](https://github.com/coreyhaines31/spare/releases/download/v0.13.0/Spare-0.13.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
+[Download Spare 0.14.0](https://github.com/coreyhaines31/spare/releases/download/v0.14.0/Spare-0.14.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
 
 Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
@@ -47,7 +47,8 @@ Install Spare, the free open-source macOS menu bar app from https://github.com/c
 3. If Homebrew is installed, run: brew install --cask coreyhaines31/tap/spare
 4. Otherwise, download the -arm64.dmg asset from the latest release at https://github.com/coreyhaines31/spare/releases/latest, mount it, copy Spare.app into /Applications, and unmount it.
 5. Open Spare with: open /Applications/Spare.app
-6. Confirm it's running (pgrep -x Spare), then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
+6. If `command -v spare` finds nothing, link Spare's command-line tool: ln -sf /Applications/Spare.app/Contents/MacOS/spare-cli /opt/homebrew/bin/spare (use /usr/local/bin/spare with sudo if /opt/homebrew/bin doesn't exist).
+7. Run `spare status` to confirm it works, then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
 ```
 
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
@@ -89,6 +90,38 @@ Use the filters, search by name, folder, or port, and sort by memory or CPU.
 
 **While you were away.** Step away for a while and Spare summarizes what ran while you were gone, including which agents and projects are still running.
 
+## Command line
+
+Spare includes a `spare` command, so you or your AI agent can check the Mac from Terminal. Homebrew installs it for you. Otherwise choose **Install Command Line Tool…** from the gear menu.
+
+```sh
+spare status                # CPU, memory, and memory pressure right now
+spare list                  # what's using the most, grouped like the panel
+spare list --agents --json  # just AI agents, as JSON
+spare show "Google Chrome"  # what it is, what closing it affects, what's inside
+spare idle                  # apps you haven't used in 2+ hours
+spare leftovers             # browser sessions automation tools left open
+spare recap week            # saved history for this week
+spare quit Slack            # ask to quit; you approve it in Spare's panel
+```
+
+Every command takes `--json`. `spare --help` lists all of them, with options and exit codes.
+
+**Nothing closes without you.** `spare quit` and `spare leftovers --close` open Spare's panel with the request, such as *Claude in website asked Spare to quit Slack*, and wait for you to choose **Quit** or **Don't Quit**. The command then reports what you decided. These two need Spare running; everything else works on its own.
+
+### Let your agent use it
+
+Paste this into Claude Code, Codex, or another coding agent, or add it to your `CLAUDE.md` or `AGENTS.md`:
+
+```text
+This Mac has Spare, a menu bar app with a command-line tool called `spare`. Run `spare --help` to learn it.
+Use it when I ask what's slowing my Mac down or what I can close, or before starting something heavy:
+- `spare status` and `spare list --json` show what's using CPU and memory, grouped into apps, projects, and AI agents.
+- `spare show <name>` explains what something is and what closing it would affect.
+- `spare idle` and `spare leftovers` find apps I haven't used and browser sessions that automation tools left open.
+Never kill processes yourself. To close something, run `spare quit <name>` or `spare leftovers --close`. I approve or decline it in Spare's panel, and the command tells you which.
+```
+
 ## Troubleshooting
 
 **I can't find Spare in the menu bar.**
@@ -109,13 +142,16 @@ Chrome doesn't tell other apps which tab each process runs. Under **Inside Googl
 **Launch at login doesn't stick.**
 macOS may need you to approve it. Choose **Approve in Login Items…** from the gear menu.
 
+**`spare: command not found`.**
+Choose **Install Command Line Tool…** from the gear menu, then open a new Terminal window. Or run the tool directly: `/Applications/Spare.app/Contents/MacOS/spare-cli`.
+
 **Something else isn't right.**
 [Open an issue](https://github.com/coreyhaines31/spare/issues/new/choose) with your macOS version, Spare version (gear menu → Check for Updates… shows it), and what you expected to see.
 
 ## Uninstall
 
 1. Choose **Quit Spare** from the gear menu.
-2. Drag Spare from Applications to the Trash.
+2. Drag Spare from Applications to the Trash. If you installed the command-line tool from the gear menu, also remove its link: `rm /opt/homebrew/bin/spare` (or `sudo rm /usr/local/bin/spare`).
 3. Optionally, remove its saved history and settings:
    ```sh
    rm -r ~/Library/Application\ Support/Spare

@@ -33,6 +33,10 @@ final class Monitor: ObservableObject {
     var onCheckForUpdates: (() -> Void)?
     @Published var awaitingAccessibility = false
     @Published var idleApps: [IdleApp] = []
+    /// A quit or close request from the `spare` command, waiting for the person.
+    @Published var pendingRequest: PendingRequest?
+    var onRequest: (() -> Void)?
+    var requestListener: CommandRequestListener?
     private let activityLog = AppActivityLog()
     /// Every process from the latest reading, for tracing what launched a session.
     private(set) var processTable: [Int32: ProcessRecord] = [:]
@@ -58,6 +62,7 @@ final class Monitor: ObservableObject {
     private let resolver = ProjectResolver()
     /// Separate from `resolver`, which the sampling queue uses.
     private let originResolver = ProjectResolver()
+    var originProject: (String) -> String { originResolver.project }
     private var timer: Timer?
     private var lastAlert = Date.distantPast
     private var busy = false

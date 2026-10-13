@@ -29,6 +29,10 @@ struct Dashboard: View {
         VStack(spacing: 0) {
             toolbar
             Divider()
+            if let request = monitor.pendingRequest {
+                CommandRequestBanner(request: request, monitor: monitor)
+                Divider()
+            }
             if let selection = path.last {
                 WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
             } else if showingActivity {
@@ -91,6 +95,7 @@ struct Dashboard: View {
                     if $0 { filter = .all }
                 }))
                 Divider()
+                Button("Install Command Line Tool…") { monitor.notice = CommandLineInstaller.install() }
                 Button("Check for Updates…") { monitor.onCheckForUpdates?() }
                 Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                 Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")

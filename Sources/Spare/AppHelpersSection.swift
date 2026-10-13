@@ -114,7 +114,7 @@ struct AppHelpersSection: View {
 
     @ViewBuilder private func sessionActions(_ sessions: [ProcessRecord], origins: [ProcessIdentity: SessionOrigin]) -> some View {
         if sessions.count > 1 {
-            let leftovers = sessions.filter { origins[$0.identity]?.isUnattended == true }
+            let leftovers = browser ? sessions.filter { origins[$0.identity]?.isUnattended == true } : []
             if let closing = closingSessions {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Close \(closing.count) separate session\(closing.count == 1 ? "" : "s")? \(HelperRole.session.consequence(browser: browser))")

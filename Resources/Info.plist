@@ -1,17 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-<key>CFBundleName</key><string>Spare</string>
-<key>CFBundleDisplayName</key><string>Spare</string>
-<key>CFBundleIdentifier</key><string>com.spareformac.Spare</string>
-<key>CFBundleExecutable</key><string>Spare</string>
-<key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.13.0</string>
-<key>CFBundleVersion</key><string>16</string>
-<key>LSMinimumSystemVersion</key><string>14.0</string>
-<key>LSUIElement</key><true/>
-<key>NSHighResolutionCapable</key><true/>
-<key>CFBundleIconFile</key><string>Spare</string>
-<key>SUFeedURL</key><string>https://github.com/coreyhaines31/spare/releases/latest/download/appcast.xml</string>
-<key>SUPublicEDKey</key><string>+CtCSZ6LuBXCGCXlALCPbYH2qywG2P5XsDdpCyofsiU=</string>
-</dict></plist>
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Spare</string>
+	<key>CFBundleExecutable</key>
+	<string>Spare</string>
+	<key>CFBundleIconFile</key>
+	<string>Spare</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.spareformac.Spare</string>
+	<key>CFBundleName</key>
+	<string>Spare</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.14.0</string>
+	<key>CFBundleVersion</key>
+	<string>17</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/coreyhaines31/spare/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>+CtCSZ6LuBXCGCXlALCPbYH2qywG2P5XsDdpCyofsiU=</string>
+</dict>
+</plist>
