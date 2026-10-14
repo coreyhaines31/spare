@@ -131,7 +131,10 @@ final class Monitor: ObservableObject {
                 processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
-                menuBarReadings = MenuBarReadings(system: snapshot.system, ready: ready, gpu: gpu, disk: disk)
+                // A reading turned on mid-sample keeps the value filled in when it was turned on.
+                menuBarReadings = MenuBarReadings(system: snapshot.system, ready: ready,
+                    gpu: gpu ?? (menuBarStats.contains(.gpu) ? menuBarReadings.gpu : nil),
+                    disk: disk ?? (menuBarStats.contains(.disk) ? menuBarReadings.disk : nil))
                 memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
                 activityLog.markWatching()
                 idleApps = ready ? IdleApps.find(grouped) { [activityLog] workload in
