@@ -2,7 +2,7 @@
 
 **See what's using your Mac.** A free, open-source menu bar app that shows CPU and memory use by the apps, projects, and AI agents you actually recognize, and helps you decide what's safe to close.
 
-[Download Spare 0.14.1](https://github.com/coreyhaines31/spare/releases/download/v0.14.1/Spare-0.14.1-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
+[Download Spare 0.15.0](https://github.com/coreyhaines31/spare/releases/download/v0.15.0/Spare-0.15.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
 
 Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
@@ -60,6 +60,7 @@ Spare is a menu bar app, so it has **no Dock icon and no app window by default**
 - **Click the gauge** any time to open or close Spare.
 - **Can't see the icon?** See [Troubleshooting](#troubleshooting). On MacBooks with a notch, a full menu bar can hide it.
 - **Prefer a window?** Choose **Open in a window** from the gear menu, or open Spare again from Applications.
+- **Want numbers in the menu bar?** Choose **Show in Menu Bar** from the gear menu and pick any of CPU, GPU, Memory, and Startup disk. Each appears as a percentage next to the gauge. All are off by default.
 
 The first readings appear within a few seconds. Spare doesn't need any permissions to start monitoring. A few optional features ask for one when you turn them on:
 

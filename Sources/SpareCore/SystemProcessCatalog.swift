@@ -33,6 +33,7 @@ public enum SystemProcessCatalog {
         "duetexpertd": .init(category: "Siri and suggestions", summary: "Learns how you use your Mac to power Siri Suggestions."),
         "fileproviderd": .init(category: "iCloud and sync", summary: "Connects iCloud Drive and cloud storage apps to Finder."),
         "fseventsd": .init(category: "System core", summary: "Records every file change so Spotlight, Time Machine, and apps can react."),
+        "hidd": .init(category: "System core", summary: "Processes input from your keyboard, mouse, and trackpad."),
         "identityservicesd": .init(category: "Messages and calls", summary: "Registers your Mac with iMessage, FaceTime, and Continuity."),
         "imagent": .init(category: "Messages and calls", summary: "Keeps Messages connected so texts arrive even when the app is closed."),
         "kernel_task": .init(category: "System core", summary: "The macOS kernel, which also keeps your CPU from overheating."),

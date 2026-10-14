@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = GaugeGlyph.menuBarImage(elevated: false)
+        item.button?.imagePosition = .imageOnly
         item.button?.setAccessibilityLabel("Spare")
         item.button?.target = self
         item.button?.action = #selector(toggle)
@@ -22,9 +23,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: Dashboard(monitor: monitor))
         monitor.onUpdate = { [weak self] health in
-            self?.item.button?.image = GaugeGlyph.menuBarImage(elevated: health.level > 0)
-            self?.item.button?.setAccessibilityLabel("Spare: \(health.title)")
-            self?.item.button?.toolTip = "Spare — \(health.title)"
+            guard let self else { return }
+            let stats = MenuBarStat.ordered(monitor.menuBarStats)
+            let values = monitor.menuBarReadings
+            item.button?.image = MenuBarStatsImage.image(elevated: health.level > 0, stats: stats, readings: values)
+            let readings = stats.map { "\($0.title) \(values.text($0))" }
+            item.button?.setAccessibilityLabel((["Spare: \(health.title)"] + readings).joined(separator: ", "))
+            item.button?.toolTip = "Spare — \(health.title)"
         }
         monitor.start()
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
