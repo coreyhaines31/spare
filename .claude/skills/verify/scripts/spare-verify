@@ -39,7 +39,7 @@ cmd_launch() {
     echo "${exe%/Contents/MacOS/Spare}" >> "$STATE/parked"
   done
   defaults export "$DOMAIN" "$STATE/defaults.plist" 2>/dev/null || true
-  [ -f "$RECAPS" ] && cp -p "$RECAPS" "$STATE/recaps.json"
+  if [ -f "$RECAPS" ]; then cp -p "$RECAPS" "$STATE/recaps.json"; else touch "$STATE/no-recaps"; fi
   if [ -s "$STATE/parked" ]; then
     say "parking installed Spare: $(paste -sd, "$STATE/parked")"
     osascript -e "tell application id \"$DOMAIN\" to quit" >/dev/null 2>&1
@@ -108,7 +108,12 @@ cmd_fixture_server() {
 cmd_teardown() {
   [ -d "$STATE" ] || { say "nothing to tear down"; return 0; }
   local run; run=$(cat "$STATE/run-dir" 2>/dev/null)
-  if [ -f "$STATE/fixture-pids" ]; then while read -r pid; do kill "$pid" 2>/dev/null; done < "$STATE/fixture-pids"; fi
+  # only kill a fixture PID that is still our http.server, in case the PID was reused
+  if [ -f "$STATE/fixture-pids" ]; then
+    while read -r pid; do
+      case "$(pid_exe "$pid")" in *"-m http.server"*) kill "$pid" ;; esac
+    done < "$STATE/fixture-pids"
+  fi
   [ -d "$FIXTURES" ] && rm -r "$FIXTURES"
   local pid; pid=$(cat "$STATE/pid" 2>/dev/null || true)
   if [ -n "$pid" ] && [ "$(pid_exe "$pid")" = "$EXE" ]; then
@@ -117,7 +122,8 @@ cmd_teardown() {
     kill -0 "$pid" 2>/dev/null && kill -KILL "$pid"
   fi
   [ -f "$STATE/defaults.plist" ] && defaults import "$DOMAIN" "$STATE/defaults.plist"
-  [ -f "$STATE/recaps.json" ] && cp -p "$STATE/recaps.json" "$RECAPS"
+  if [ -f "$STATE/recaps.json" ]; then cp -p "$STATE/recaps.json" "$RECAPS"
+  elif [ -f "$STATE/no-recaps" ] && [ -f "$RECAPS" ]; then rm "$RECAPS"; fi
   if [ -s "$STATE/parked" ]; then
     while read -r app; do open -g "$app"; done < "$STATE/parked"
     for _ in $(seq 40); do [ -n "$(spare_pids)" ] && break; sleep 0.25; done
