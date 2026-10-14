@@ -27,6 +27,9 @@ final class Monitor: ObservableObject {
     @Published var error: String?
     @Published var notice: String?
     @Published var alerts = UserDefaults.standard.bool(forKey: "alerts")
+    /// Readings shown next to the menu bar icon. Off unless someone turns them on.
+    @Published var menuBarStats = Set((UserDefaults.standard.stringArray(forKey: "menuBarStats") ?? []).compactMap(MenuBarStat.init))
+    @Published var menuBarReadings = MenuBarReadings()
     @Published var loginStatus = SMAppService.mainApp.status
     var onOpenWindow: (() -> Void)?
     var onOpenRecap: (() -> Void)?
@@ -95,10 +98,13 @@ final class Monitor: ObservableObject {
                 canQuit: app.activationPolicy == .regular && app.processIdentifier != getpid())
         }
         let saveHistory = savingHistory
+        let stats = menuBarStats
         let generation = sampleGeneration
         let idle = CGEventType(rawValue: ~0).map { CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: $0) } ?? 0
         queue.async { [self] in
             let snapshot = sampler.sample()
+            let gpu = stats.contains(.gpu) ? GPUUsage.read() : nil
+            let disk = stats.contains(.disk) ? DiskUsage.read() : nil
             let grouped = snapshot.map { WorkloadGrouper.group($0.processes, apps: apps, project: resolver.project) }
             recapStore.record(snapshot?.system, workloads: grouped ?? [], ready: snapshot?.ready ?? false, enabled: saveHistory)
             awayTracker.record(snapshot?.system, workloads: grouped ?? [], idleSeconds: idle, ready: snapshot?.ready ?? false,
@@ -112,6 +118,7 @@ final class Monitor: ObservableObject {
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
+                    menuBarReadings = MenuBarReadings()
                     trendTracker.reset()
                     memoryTrends = [:]
                     history.pause(at: Date())
@@ -124,6 +131,7 @@ final class Monitor: ObservableObject {
                 processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
+                menuBarReadings = MenuBarReadings(system: snapshot.system, ready: ready, gpu: gpu, disk: disk)
                 memoryTrends = trendTracker.record(grouped, at: snapshot.system.date, ready: ready)
                 activityLog.markWatching()
                 idleApps = ready ? IdleApps.find(grouped) { [activityLog] workload in
@@ -211,6 +219,15 @@ final class Monitor: ObservableObject {
     func clearActivity() {
         history.clear()
         activity = []
+    }
+
+    func setMenuBarStat(_ stat: MenuBarStat, shown: Bool) {
+        if shown { menuBarStats.insert(stat) } else { menuBarStats.remove(stat) }
+        UserDefaults.standard.set(MenuBarStat.ordered(menuBarStats).map(\.rawValue), forKey: "menuBarStats")
+        // Fill in a new reading now rather than showing a dash until the next sample.
+        if shown && stat == .gpu { menuBarReadings.gpu = GPUUsage.read() }
+        if shown && stat == .disk { menuBarReadings.disk = DiskUsage.read() }
+        onUpdate?(health)
     }
 
     func setAlerts(_ enabled: Bool) {
