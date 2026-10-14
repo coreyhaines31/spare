@@ -89,6 +89,12 @@ struct Dashboard: View {
                 if monitor.loginStatus == .requiresApproval {
                     Button("Approve in Login Items…") { SMAppService.openSystemSettingsLoginItems() }
                 }
+                Menu("Show in Menu Bar") {
+                    ForEach(MenuBarStat.allCases, id: \.self) { stat in
+                        Toggle(stat.title, isOn: Binding(get: { monitor.menuBarStats.contains(stat) },
+                                                         set: { monitor.setMenuBarStat(stat, shown: $0) }))
+                    }
+                }
                 Toggle("Warn about sustained pressure", isOn: Binding(get: { monitor.alerts }, set: monitor.setAlerts))
                 Toggle("Show unidentified processes", isOn: Binding(get: { includeBackground }, set: {
                     includeBackground = $0
