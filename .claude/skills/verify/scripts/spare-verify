@@ -1,0 +1,138 @@
+#!/bin/bash
+# Drives a dev build of Spare for verification. Run from anywhere inside the repo.
+#   spare-verify build | launch | doctor | cli <spare args...> | fixture-server <name> | teardown
+set -uo pipefail
+
+REPO=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
+APP="$REPO/dist/Spare.app"
+EXE="$APP/Contents/MacOS/Spare"
+CLI="$APP/Contents/MacOS/spare-cli"
+STATE="$REPO/.build/verify-state"
+DOMAIN=com.spareformac.Spare
+RECAPS="$HOME/Library/Application Support/Spare/recaps.json"
+
+say() { printf 'spare-verify: %s\n' "$*" >&2; }
+die() { say "$*"; exit 1; }
+run_dir() { cat "$STATE/run-dir" 2>/dev/null || die "not launched (run: spare-verify launch)"; }
+
+# PIDs of every Spare app process, ours or not. Matches the executable path, never a bare name.
+spare_pids() { pgrep -f '/Spare\.app/Contents/MacOS/Spare$' || true; }
+pid_exe() { ps -o command= -p "$1" 2>/dev/null; }
+
+cmd_build() {
+  make -C "$REPO" app || die "build failed"
+  say "built $APP"
+}
+
+cmd_launch() {
+  [ -x "$EXE" ] || die "no build at $APP (run: spare-verify build)"
+  [ -d "$STATE" ] && die "already launched; run doctor, or teardown first"
+  mkdir -p "$STATE"
+  local run="$REPO/artifacts/verify/$(date +%Y%m%d-%H%M%S)"
+  mkdir -p "$run"; echo "$run" > "$STATE/run-dir"
+
+  # Spare is single-instance in practice: one bundle id, one defaults domain, one recap file,
+  # one distributed-notification channel. Park the installed copy and restore it on teardown.
+  : > "$STATE/parked"
+  for pid in $(spare_pids); do
+    exe=$(pid_exe "$pid"); [ "$exe" = "$EXE" ] && die "a dev Spare from this checkout is already running (pid $pid) but no state; quit it by that pid, then relaunch"
+    echo "${exe%/Contents/MacOS/Spare}" >> "$STATE/parked"
+  done
+  defaults export "$DOMAIN" "$STATE/defaults.plist" 2>/dev/null || true
+  [ -f "$RECAPS" ] && cp -p "$RECAPS" "$STATE/recaps.json"
+  if [ -s "$STATE/parked" ]; then
+    say "parking installed Spare: $(paste -sd, "$STATE/parked")"
+    osascript -e "tell application id \"$DOMAIN\" to quit" >/dev/null 2>&1
+    for _ in $(seq 20); do [ -z "$(spare_pids)" ] && break; sleep 0.5; done
+    for pid in $(spare_pids); do kill -TERM "$pid"; done
+    for _ in $(seq 10); do [ -z "$(spare_pids)" ] && break; sleep 0.5; done
+    [ -z "$(spare_pids)" ] || die "installed Spare would not quit; run teardown to restore state"
+  fi
+
+  open -n -g "$APP"
+  local pid=""
+  for _ in $(seq 40); do pid=$(pgrep -f "^$EXE\$" | head -1); [ -n "$pid" ] && break; sleep 0.25; done
+  [ -n "$pid" ] || die "dev Spare did not start"
+  echo "$pid" > "$STATE/pid"
+  # Ready = the CLI finds the running app by bundle id and the app answers a request-free command.
+  for _ in $(seq 40); do "$CLI" idle --json >/dev/null 2>&1 && break; sleep 0.25; done
+  "$CLI" idle --json >/dev/null 2>&1 || die "dev Spare (pid $pid) is up but the CLI does not see it"
+  say "ready: pid $pid, evidence in $run"
+}
+
+cmd_doctor() {
+  local ok=0
+  [ -d "$STATE" ] || die "FAIL not launched"
+  local pid; pid=$(cat "$STATE/pid")
+  if [ "$(pid_exe "$pid")" = "$EXE" ]; then echo "ok   dev Spare pid $pid runs $EXE"; else echo "FAIL pid $pid is not this checkout's Spare"; ok=1; fi
+  local others; others=$(spare_pids | grep -vx "$pid" | tr '\n' ' ')
+  if [ -z "$others" ]; then echo "ok   no other Spare instance"; else echo "FAIL other Spare running: $others"; ok=1; fi
+  local newest; newest=$(find "$REPO/Sources" -name '*.swift' -o -name '*.c' -o -name '*.h' | xargs stat -f %m | sort -n | tail -1)
+  if [ "$(stat -f %m "$EXE")" -ge "$newest" ]; then echo "ok   build is newer than Sources/"; else echo "FAIL build is older than Sources/ (rebuild, relaunch)"; ok=1; fi
+  if "$CLI" idle --json >/dev/null 2>&1; then echo "ok   CLI reaches the running app"; else echo "FAIL CLI cannot see the running app"; ok=1; fi
+  # status exits 2/3 under Warning/Critical pressure; only the JSON matters here
+  if "$CLI" status --json 2>/dev/null | { python3 -c 'import json,sys; d=json.load(sys.stdin); assert "memory_pressure" in d' 2>/dev/null; }; [ "${PIPESTATUS[1]}" -eq 0 ]; then echo "ok   status reading parses"; else echo "FAIL status --json unreadable"; ok=1; fi
+  echo "     version $(defaults read "$APP/Contents/Info" CFBundleShortVersionString), evidence $(cat "$STATE/run-dir")"
+  return $ok
+}
+
+# Runs the bundled CLI and records the command, stdout, stderr, and exit code as evidence.
+cmd_cli() {
+  local run; run=$(run_dir)
+  local n; n=$(printf '%02d' $(( $(ls "$run" | grep -c '\.cmd$') + 1 )))
+  printf 'spare %s\n' "$*" > "$run/$n.cmd"
+  "$CLI" "$@" > "$run/$n.stdout" 2> "$run/$n.stderr"
+  local code=$?
+  echo "$code" > "$run/$n.exit"
+  cat "$run/$n.stdout"; cat "$run/$n.stderr" >&2
+  say "exit $code -> $run/$n.*"
+  return $code
+}
+
+# A throwaway dev server in its own folder outside any repo, so Spare lists it as its own
+# project with a port. Inside this checkout Spare would group it with the whole repo.
+FIXTURES="${TMPDIR:-/tmp}/spare-verify-fixtures"
+cmd_fixture_server() {
+  local name=${1:-spare-verify-fixture}
+  [ -d "$STATE" ] || die "not launched"
+  local dir="$FIXTURES/$name"; mkdir -p "$dir"
+  local port; port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
+  (cd "$dir" && exec python3 -m http.server "$port" --bind 127.0.0.1 >/dev/null 2>&1) &
+  local pid=$!
+  echo "$pid" >> "$STATE/fixture-pids"
+  for _ in $(seq 20); do curl -s -o /dev/null "http://127.0.0.1:$port/" && break; sleep 0.25; done
+  say "fixture '$name' pid $pid on port $port (folder $dir)"
+  echo "$port"
+}
+
+cmd_teardown() {
+  [ -d "$STATE" ] || { say "nothing to tear down"; return 0; }
+  local run; run=$(cat "$STATE/run-dir" 2>/dev/null)
+  if [ -f "$STATE/fixture-pids" ]; then while read -r pid; do kill "$pid" 2>/dev/null; done < "$STATE/fixture-pids"; fi
+  [ -d "$FIXTURES" ] && rm -r "$FIXTURES"
+  local pid; pid=$(cat "$STATE/pid" 2>/dev/null || true)
+  if [ -n "$pid" ] && [ "$(pid_exe "$pid")" = "$EXE" ]; then
+    kill -TERM "$pid"
+    for _ in $(seq 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
+    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid"
+  fi
+  [ -f "$STATE/defaults.plist" ] && defaults import "$DOMAIN" "$STATE/defaults.plist"
+  [ -f "$STATE/recaps.json" ] && cp -p "$STATE/recaps.json" "$RECAPS"
+  if [ -s "$STATE/parked" ]; then
+    while read -r app; do open -g "$app"; done < "$STATE/parked"
+    for _ in $(seq 40); do [ -n "$(spare_pids)" ] && break; sleep 0.25; done
+    if [ -n "$(spare_pids)" ]; then say "restored installed Spare: $(paste -sd, "$STATE/parked")"; else say "WARNING installed Spare did not relaunch: open $(head -1 "$STATE/parked")"; fi
+  fi
+  rm -r "$STATE"
+  [ -n "$run" ] && say "evidence kept in $run"
+}
+
+case "${1:-}" in
+  build) cmd_build ;;
+  launch) cmd_launch ;;
+  doctor) cmd_doctor ;;
+  cli) shift; cmd_cli "$@" ;;
+  fixture-server) shift; cmd_fixture_server "$@" ;;
+  teardown) cmd_teardown ;;
+  *) sed -n 2,3p "$0"; exit 2 ;;
+esac
