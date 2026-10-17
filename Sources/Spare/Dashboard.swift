@@ -94,6 +94,9 @@ struct Dashboard: View {
                         Toggle(stat.title, isOn: Binding(get: { monitor.menuBarStats.contains(stat) },
                                                          set: { monitor.setMenuBarStat(stat, shown: $0) }))
                     }
+                    Divider()
+                    Toggle("Just the first when only the laptop screen is in use",
+                           isOn: Binding(get: { monitor.compactOnLaptopScreen }, set: monitor.setCompactOnLaptopScreen))
                 }
                 Toggle("Warn about sustained pressure", isOn: Binding(get: { monitor.alerts }, set: monitor.setAlerts))
                 Toggle("Show unidentified processes", isOn: Binding(get: { includeBackground }, set: {

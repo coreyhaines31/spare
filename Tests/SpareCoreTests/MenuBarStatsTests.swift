@@ -7,6 +7,20 @@ final class MenuBarStatsTests: XCTestCase {
         XCTAssertEqual(MenuBarStat.ordered([]), [])
     }
 
+    func testCompactKeepsOnlyTheFirstReading() {
+        XCTAssertEqual(MenuBarStat.shown([.disk, .memory, .gpu], compact: true), [.gpu])
+        XCTAssertEqual(MenuBarStat.shown([.disk, .memory, .gpu], compact: false), [.gpu, .memory, .disk])
+        XCTAssertEqual(MenuBarStat.shown([], compact: true), [])
+    }
+
+    func testLaptopScreenOnlyWhenEveryScreenIsBuiltIn() {
+        XCTAssertTrue(MenuBarStat.laptopScreenOnly(builtIn: [true]))
+        XCTAssertFalse(MenuBarStat.laptopScreenOnly(builtIn: [true, false]))
+        // Lid closed with an external monitor: only the external screen is listed.
+        XCTAssertFalse(MenuBarStat.laptopScreenOnly(builtIn: [false]))
+        XCTAssertFalse(MenuBarStat.laptopScreenOnly(builtIn: []))
+    }
+
     func testReadsPercentagesFromASystemSample() {
         let system = SystemSample(cpu: 18.4, memory: 87, physical: 100)
         let readings = MenuBarReadings(system: system, ready: true, gpu: 37.6, disk: 70)
