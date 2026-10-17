@@ -67,7 +67,7 @@ The first readings appear within a few seconds. Spare doesn't need any permissio
 | Feature | Permission | When it's asked |
 |---|---|---|
 | Warn about sustained pressure | Notifications | When you turn the warning on in the gear menu |
-| Launch at login | Login Items | When you turn it on; macOS may ask you to approve it |
+| Launch at login | Login Items | On by default the first time you open Spare from Applications; turn it off in the gear menu |
 | Open Chrome's Task Manager | Accessibility | Only when you click that button; used only to choose that menu item |
 
 ## A quick tour
