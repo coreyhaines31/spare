@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.button?.setAccessibilityLabel((["Spare: \(health.title)"] + readings).joined(separator: ", "))
             item.button?.toolTip = "Spare — \(health.title)"
         }
+        monitor.applyLaunchAtLoginDefault()
         monitor.start()
         monitor.onOpenWindow = { [weak self] in self?.showWindow() }
         monitor.onOpenRecap = { [weak self] in self?.showRecap() }
