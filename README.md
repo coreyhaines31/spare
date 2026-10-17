@@ -2,7 +2,7 @@
 
 **See what's using your Mac.** A free, open-source menu bar app that shows CPU and memory use by the apps, projects, and AI agents you actually recognize, and helps you decide what's safe to close.
 
-[Download Spare 0.15.0](https://github.com/coreyhaines31/spare/releases/download/v0.15.0/Spare-0.15.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
+[Download Spare 0.15.1](https://github.com/coreyhaines31/spare/releases/download/v0.15.1/Spare-0.15.1-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
 
 Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
@@ -67,7 +67,7 @@ The first readings appear within a few seconds. Spare doesn't need any permissio
 | Feature | Permission | When it's asked |
 |---|---|---|
 | Warn about sustained pressure | Notifications | When you turn the warning on in the gear menu |
-| Launch at login | Login Items | When you turn it on; macOS may ask you to approve it |
+| Launch at login | Login Items | On by default the first time you open Spare from Applications; turn it off in the gear menu |
 | Open Chrome's Task Manager | Accessibility | Only when you click that button; used only to choose that menu item |
 
 ## A quick tour
