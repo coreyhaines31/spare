@@ -24,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(rootView: Dashboard(monitor: monitor))
         monitor.onUpdate = { [weak self] health in
             guard let self else { return }
-            let stats = MenuBarStat.ordered(monitor.menuBarStats)
+            let stats = monitor.shownMenuBarStats
             let values = monitor.menuBarReadings
             item.button?.image = MenuBarStatsImage.image(elevated: health.level > 0, stats: stats, readings: values)
             let readings = stats.map { "\($0.title) \(values.text($0))" }

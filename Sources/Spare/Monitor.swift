@@ -30,6 +30,11 @@ final class Monitor: ObservableObject {
     /// Readings shown next to the menu bar icon. Off unless someone turns them on.
     @Published var menuBarStats = Set((UserDefaults.standard.stringArray(forKey: "menuBarStats") ?? []).compactMap(MenuBarStat.init))
     @Published var menuBarReadings = MenuBarReadings()
+    /// Shows only the first reading while every screen is built in, so the item fits beside the notch.
+    @Published var compactOnLaptopScreen = UserDefaults.standard.object(forKey: "compactOnLaptopScreen") as? Bool ?? true
+    @Published private(set) var laptopScreenOnly = Monitor.readLaptopScreenOnly()
+    private var screenObserver: NSObjectProtocol?
+    var shownMenuBarStats: [MenuBarStat] { MenuBarStat.shown(menuBarStats, compact: compactOnLaptopScreen && laptopScreenOnly) }
     @Published var loginStatus = SMAppService.mainApp.status
     var onOpenWindow: (() -> Void)?
     var onOpenRecap: (() -> Void)?
@@ -96,6 +101,8 @@ final class Monitor: ObservableObject {
             }
         ]
         if let path = NSWorkspace.shared.frontmostApplication?.bundleURL?.path { activityLog.recordActivation(appPath: path) }
+        screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
+                                                                object: nil, queue: .main) { [weak self] _ in self?.screensChanged() }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in self?.refresh() }
     }
@@ -228,6 +235,8 @@ final class Monitor: ObservableObject {
         timer?.invalidate()
         for observer in sleepObservers { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
         sleepObservers = []
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+        screenObserver = nil
         queue.sync { recapStore.save() }
     }
 
@@ -243,6 +252,27 @@ final class Monitor: ObservableObject {
         if shown && stat == .gpu { menuBarReadings.gpu = GPUUsage.read() }
         if shown && stat == .disk { menuBarReadings.disk = DiskUsage.read() }
         onUpdate?(health)
+    }
+
+    func setCompactOnLaptopScreen(_ enabled: Bool) {
+        compactOnLaptopScreen = enabled
+        UserDefaults.standard.set(enabled, forKey: "compactOnLaptopScreen")
+        onUpdate?(health)
+    }
+
+    /// Resizes the menu bar item as soon as a display is connected or disconnected.
+    private func screensChanged() {
+        let only = Monitor.readLaptopScreenOnly()
+        guard only != laptopScreenOnly else { return }
+        laptopScreenOnly = only
+        onUpdate?(health)
+    }
+
+    private static func readLaptopScreenOnly() -> Bool {
+        MenuBarStat.laptopScreenOnly(builtIn: NSScreen.screens.map { screen in
+            guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return false }
+            return CGDisplayIsBuiltin(number.uint32Value) != 0
+        })
     }
 
     func setAlerts(_ enabled: Bool) {
