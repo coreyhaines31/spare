@@ -27,6 +27,16 @@ public enum MenuBarStat: String, CaseIterable, Codable {
 
     /// Keeps the menu bar order fixed no matter the order they were turned on.
     public static func ordered(_ stats: Set<MenuBarStat>) -> [MenuBarStat] { allCases.filter(stats.contains) }
+
+    /// The readings to draw. Compact keeps only the first, for a menu bar short on room.
+    public static func shown(_ stats: Set<MenuBarStat>, compact: Bool) -> [MenuBarStat] {
+        let all = ordered(stats)
+        return compact ? Array(all.prefix(1)) : all
+    }
+
+    /// True when every connected screen is built in, where the notch leaves the menu bar little room.
+    /// No screens at all, such as a closed lid with nothing attached, isn't a laptop screen.
+    public static func laptopScreenOnly(builtIn screens: [Bool]) -> Bool { !screens.isEmpty && !screens.contains(false) }
 }
 
 /// The latest percentages for the menu bar. A missing value shows as a dash.
