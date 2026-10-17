@@ -60,6 +60,18 @@ final class Monitor: ObservableObject {
         }
     }
 
+    /// Turns on launch at login the first time an installed copy runs. Only once, so turning it off sticks.
+    func applyLaunchAtLoginDefault() {
+        #if !DEBUG
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "appliedLaunchAtLoginDefault"),
+              Bundle.main.bundlePath.contains("/Applications/") else { return }
+        defaults.set(true, forKey: "appliedLaunchAtLoginDefault")
+        try? SMAppService.mainApp.register()
+        loginStatus = SMAppService.mainApp.status
+        #endif
+    }
+
     private let queue = DispatchQueue(label: "com.spareformac.sampler", qos: .utility)
     private let sampler = Sampler()
     private let resolver = ProjectResolver()
