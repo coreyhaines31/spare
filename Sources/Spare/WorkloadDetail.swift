@@ -9,6 +9,9 @@ struct WorkloadDetail: View {
     @State private var review: Workload?
     private var latest: Workload? { selection.current(in: monitor.workloads) }
     private var workload: Workload { review ?? latest ?? selection }
+    private var activity: AgentActivity? { latest?.activity(in: monitor.agentActivity) }
+    /// The reviewed processes' activity now, so a stop review warns if they start working.
+    private var liveActivity: AgentActivity? { workload.activity(in: monitor.agentActivity) }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -17,6 +20,7 @@ struct WorkloadDetail: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(workload.name).font(.title2.weight(.semibold)).textSelection(.enabled)
                         Text(workload.subtitle).font(.caption).foregroundStyle(.secondary)
+                        if let activity { ActivityBadge(activity: activity) }
                     }
                 }
                 HStack {
@@ -55,7 +59,10 @@ struct WorkloadDetail: View {
                             Button { select(session) } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(session.subtitle).font(.caption)
+                                        HStack(spacing: 6) {
+                                            Text(session.subtitle).font(.caption)
+                                            if let activity = session.activity(in: monitor.agentActivity) { ActivityBadge(activity: activity) }
+                                        }
                                         Text("\(DisplayFormat.memory(session.memory)) · \(DisplayFormat.percent(session.cpu)) CPU").font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
@@ -70,6 +77,11 @@ struct WorkloadDetail: View {
                         Text(workload.appIdentity != nil ? "Quit \(workload.name)?" : "Stop these tasks?").font(.headline)
                         Text(workload.appIdentity != nil ? "Spare will ask this app to quit normally. Save any work first." :
                             "Spare will ask these \(workload.processes.count) processes to stop. Running agent tasks or unsaved in-memory work may be interrupted. Nothing is force-killed.")
+                        // Live, not frozen with the review: whether it's mid-task can change while you decide.
+                        if let warning = liveActivity?.stopWarning(agent: workload.name) {
+                            Label(warning, systemImage: "exclamationmark.triangle.fill").font(.callout)
+                                .foregroundStyle(liveActivity == .working ? .orange : .secondary)
+                        }
                         HStack {
                             Button("Cancel") { review = nil }.keyboardShortcut(.cancelAction)
                             Spacer()
