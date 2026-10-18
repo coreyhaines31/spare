@@ -22,6 +22,9 @@ final class Monitor: ObservableObject {
     @Published var activity: [ActivityEvent] = []
     private let history = ActivityHistory()
     @Published var workloads: [Workload] = []
+    /// Whether each agent process looks mid-task.
+    @Published var agentActivity: [ProcessIdentity: AgentActivity] = [:]
+    private let activityTracker = AgentActivityTracker()
     @Published var samples: [SystemSample] = []
     @Published var ready = false
     @Published var error: String?
@@ -125,6 +128,10 @@ final class Monitor: ObservableObject {
             let gpu = stats.contains(.gpu) ? GPUUsage.read() : nil
             let disk = stats.contains(.disk) ? DiskUsage.read() : nil
             let grouped = snapshot.map { WorkloadGrouper.group($0.processes, apps: apps, project: resolver.project) }
+            let agents = snapshot.map {
+                activityTracker.record($0.processes, ready: $0.ready, claude: ClaudeSessionStatus.read(),
+                                       now: ProcessInfo.processInfo.systemUptime)
+            } ?? [:]
             recapStore.record(snapshot?.system, workloads: grouped ?? [], ready: snapshot?.ready ?? false, enabled: saveHistory)
             awayTracker.record(snapshot?.system, workloads: grouped ?? [], idleSeconds: idle, ready: snapshot?.ready ?? false,
                                enabled: saveHistory, now: Date())
@@ -137,6 +144,7 @@ final class Monitor: ObservableObject {
                 guard let snapshot, let grouped else {
                     error = "Spare couldn’t read system resources. It will try again shortly."
                     ready = false
+                    agentActivity = [:]
                     menuBarReadings = MenuBarReadings()
                     trendTracker.reset()
                     memoryTrends = [:]
@@ -147,6 +155,7 @@ final class Monitor: ObservableObject {
                 }
                 error = nil
                 workloads = grouped
+                agentActivity = agents
                 processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
                 ready = snapshot.ready
@@ -182,6 +191,7 @@ final class Monitor: ObservableObject {
         activity = history.events
         queue.async { [self] in
             sampler.reset()
+            activityTracker.reset()
             recapStore.history.pause()
             awayTracker.pause()
             if isSleeping { recapStore.save() }

@@ -22,7 +22,7 @@ enum Commands {
             options.sortCPU ? ($0.cpu, $0.memory) > ($1.cpu, $1.memory) : $0.memory > $1.memory
         }
         let shown = options.limit > 0 ? Array(visible.prefix(options.limit)) : visible
-        let summaries = shown.map { WorkloadSummary($0, command: reading.command(for: $0)) }
+        let summaries = shown.map(reading.summary)
         if Output.json { return Output.print(summaries) }
         guard !summaries.isEmpty else { return print("Nothing matching is running.") }
         let rows = [["NAME", "KIND", "MEMORY", "CPU", "DETAILS"]] + summaries.map { item in
@@ -83,7 +83,7 @@ enum Commands {
                           origin: role == .session ? reading.origin(of: process).description : nil)
         }
         let docker = DockerSettings.isDocker(workload) ? DockerSettings.memoryLimit(physical: reading.snapshot.system.physical) : nil
-        let details = Details(workload: WorkloadSummary(workload, command: reading.command(for: workload)),
+        let details = Details(workload: reading.summary(workload),
                               explanation: workload.explanation, ifClosed: workload.consequence,
                               urls: workload.webPorts.map { "http://localhost:\($0)" }, dockerMemoryLimitBytes: docker?.bytes,
                               inside: inside, processes: helpers,
@@ -96,6 +96,7 @@ enum Commands {
         print("")
         print(workload.explanation)
         print("If you close it: \(workload.consequence)")
+        if let warning = workload.activity(in: reading.agents)?.stopWarning(agent: workload.name) { print(warning) }
         if let path = workload.projectPath { print("Folder: \(DisplayFormat.homePath(path))") }
         if !details.urls.isEmpty { print("Open: " + details.urls.joined(separator: ", ")) }
         if let docker {
@@ -230,6 +231,7 @@ enum Commands {
 
     private static func detailText(_ item: WorkloadSummary) -> String {
         var parts = ["\(item.processCount) process\(item.processCount == 1 ? "" : "es")"]
+        if let activity = item.activity.flatMap(AgentActivity.init) { parts.insert(activity.label, at: 0) }
         if !item.ports.isEmpty { parts.append("port " + item.ports.prefix(3).map(String.init).joined(separator: ", ")) }
         if let command = item.command { parts.append(command) }
         return parts.joined(separator: " · ")

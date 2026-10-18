@@ -2,7 +2,7 @@
 
 **See what's using your Mac.** A free, open-source menu bar app that shows CPU and memory use by the apps, projects, and AI agents you actually recognize, and helps you decide what's safe to close.
 
-[Download Spare 0.16.0](https://github.com/coreyhaines31/spare/releases/download/v0.16.0/Spare-0.16.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
+[Download Spare 0.17.0](https://github.com/coreyhaines31/spare/releases/download/v0.17.0/Spare-0.17.0-arm64.dmg) · [Website](https://spareformac.com) · [All releases](https://github.com/coreyhaines31/spare/releases)
 
 Free and MIT licensed. No account, no subscription, and nothing leaves your Mac.
 
@@ -76,7 +76,7 @@ The first readings appear within a few seconds. Spare doesn't need any permissio
 
 - **Apps** appear with all their helper processes counted together, so Chrome is one line instead of 50.
 - **Projects** are local dev servers and tools grouped by folder, with the command and port, like *website · port 3000 · next dev*.
-- **Agents** such as Claude Code, Codex, Aider, Ollama, and OpenCode are grouped by the folder they're working in.
+- **Agents** such as Claude Code, Codex, Aider, Ollama, and OpenCode are grouped by the folder they're working in. Each shows whether it's mid-task, so you don't close one in the middle of a reply: Claude Code reports **Working** or **Waiting for you** itself, and other agents show **Active** or **Quiet** from their CPU use in the last 10 seconds.
 - **macOS** processes like WindowServer and mds_stores are labeled with a plain explanation and are never offered for stopping.
 
 Use the filters, search by name, folder, or port, and sort by memory or CPU.

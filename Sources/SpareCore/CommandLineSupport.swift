@@ -67,8 +67,10 @@ public struct WorkloadSummary: Codable, Equatable {
     public var appPath: String?
     public var command: String?
     public var note: String?
+    /// For agents: working, waiting, active, or quiet. See ``AgentActivity``.
+    public var activity: String?
 
-    public init(_ workload: Workload, command: String? = nil, note: String? = nil) {
+    public init(_ workload: Workload, command: String? = nil, note: String? = nil, activity: AgentActivity? = nil) {
         id = workload.id
         name = workload.name
         kind = workload.kind.commandName
@@ -83,6 +85,7 @@ public struct WorkloadSummary: Codable, Equatable {
         appPath = workload.appPath
         self.command = command
         self.note = note
+        self.activity = activity?.rawValue
     }
 }
 
