@@ -9,6 +9,8 @@ struct PendingRequest {
     let title: String
     let detail: String
     let action: String
+    /// What the request would close, for a live warning if an agent in it is mid-task.
+    var workload: Workload?
     let perform: () -> Result
 }
 
@@ -82,7 +84,7 @@ extension Monitor {
         present(PendingRequest(
             message: message, title: "\(verb) \(workload.name)?",
             detail: "\(requester(message)) asked Spare to \(verb.lowercased()) \(workload.name), which is using \(DisplayFormat.memory(workload.memory)). \(workload.consequence)",
-            action: verb
+            action: verb, workload: workload
         ) { [weak self] in
             guard let self, let current = workload.current(in: self.workloads), current.canStop else {
                 return (.notFound, "\(workload.name) had already closed.", [])
@@ -151,6 +153,10 @@ struct CommandRequestBanner: View {
         VStack(alignment: .leading, spacing: 8) {
             Label(request.title, systemImage: "terminal").font(.headline)
             Text(request.detail).font(.callout).fixedSize(horizontal: false, vertical: true)
+            if let workload = request.workload, let warning = workload.activity(in: monitor.agentActivity)?.stopWarning(agent: workload.name) {
+                Label(warning, systemImage: "exclamationmark.triangle.fill").font(.callout.weight(.medium))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 Button("Don’t \(request.action)") { monitor.declineRequest() }.keyboardShortcut(.cancelAction)
                 Spacer()

@@ -142,7 +142,8 @@ struct Dashboard: View {
                 LazyVStack(spacing: 0) {
                     ForEach(visible) { workload in
                         WorkloadRow(workload: workload, sortCPU: sortCPU,
-                                    note: monitor.idleApps.first { $0.workload.id == workload.id }.map { IdleApps.describe($0.idle) },
+                                    note: monitor.idleApps.first { $0.workload.id == workload.id }.map { IdleApps.describe($0.idle) }
+                                        ?? workload.activity(in: monitor.agentActivity)?.label,
                                     growth: monitor.memoryTrends[workload.id].flatMap { $0.isGrowing ? $0.summary : nil }) {
                             path.append(workload)
                         }

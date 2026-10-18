@@ -164,3 +164,14 @@ struct PressureBadge: View {
         }
     }
 }
+
+/// Whether an agent is mid-task, with how Spare knows as its tooltip.
+struct ActivityBadge: View {
+    let activity: AgentActivity
+    var body: some View {
+        Label(activity.label, systemImage: activity.isBusy ? "circle.fill" : "circle")
+            .font(.caption.weight(.medium)).labelStyle(.titleAndIcon).imageScale(.small)
+            .foregroundStyle(activity == .working ? Color.orange : .secondary)
+            .help(activity == .working || activity == .waiting ? "Reported by Claude Code" : "Estimated from CPU use in the last 10 seconds")
+    }
+}

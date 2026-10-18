@@ -10,6 +10,7 @@ struct Reading {
     let records: [Int32: ProcessRecord]
     let appNames: [Int32: String]
     let resolver: ProjectResolver
+    let agents: [ProcessIdentity: AgentActivity]
 
     /// CPU is measured between two samples, so this takes about a second.
     static func take() -> Reading {
@@ -28,7 +29,13 @@ struct Reading {
                        workloads: WorkloadGrouper.group(snapshot.processes, apps: apps, project: resolver.project),
                        records: Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first }),
                        appNames: Dictionary(apps.map { ($0.pid, $0.name) }, uniquingKeysWith: { first, _ in first }),
-                       resolver: resolver)
+                       resolver: resolver,
+                       agents: AgentActivityTracker().record(snapshot.processes, ready: snapshot.ready,
+                                                             claude: ClaudeSessionStatus.read(), now: 0))
+    }
+
+    func summary(_ workload: Workload) -> WorkloadSummary {
+        WorkloadSummary(workload, command: command(for: workload), activity: workload.activity(in: agents))
     }
 
     func command(for workload: Workload) -> String? {
