@@ -79,6 +79,14 @@ final class StrayProcessTests: XCTestCase {
         XCTAssertEqual(strays.map(\.name), ["next dev · site"])
     }
 
+    func testTreeWithALiveAgentInsideIsNeverAStray() {
+        let records = table([
+            ProcessRecord(pid: 50, started: started(hoursAgo: 2), parent: 1, name: "python3", path: "/usr/bin/python3"),
+            ProcessRecord(pid: 51, started: started(hoursAgo: 1), parent: 50, name: "claude", path: "/u/.local/bin/claude")
+        ])
+        XCTAssertTrue(StrayProcesses.find(records: records, arguments: { $0.pid == 50 ? ["python3", "-m", "http.server"] : [] }, now: now).isEmpty)
+    }
+
     func testPublicTunnelsRankFirst() {
         let records = table([
             ProcessRecord(pid: 40, started: started(hoursAgo: 1), parent: 1, name: "node", path: "/bin/node", memory: 900),

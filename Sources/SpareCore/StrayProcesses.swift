@@ -97,6 +97,8 @@ public enum StrayProcesses {
             if match.kind == .tunnel { parts.insert("Reachable from the internet", at: 0) }
             if match.kind == .fileServer { parts.insert("Shares a folder with your network", at: 0) }
             let processes = tree(from: root, children: children)
+            // Stopping a stray stops its whole tree, which must never take a live agent with it.
+            guard !processes.contains(where: { ProcessClassifier.developerKind($0) == .agent }) else { return nil }
             if processes.contains(where: { $0.path.contains("/.Trash/") }) { parts.append("runs from the Trash, which can keep it from emptying") }
             let folder = folderName(project(root.directory))
             let name = [.devServer, .fileServer].contains(match.kind) && !folder.isEmpty ? "\(match.name) · \(folder)" : match.name
