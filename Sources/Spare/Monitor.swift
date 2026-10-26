@@ -44,6 +44,8 @@ final class Monitor: ObservableObject {
     var onCheckForUpdates: (() -> Void)?
     @Published var awaitingAccessibility = false
     @Published var idleApps: [IdleApp] = []
+    /// Processes agents and tools left running that no live agent owns.
+    @Published var strays: [StrayProcess] = []
     /// A quit or close request from the `spare` command, waiting for the person.
     @Published var pendingRequest: PendingRequest?
     var onRequest: (() -> Void)?
@@ -158,6 +160,8 @@ final class Monitor: ObservableObject {
                 agentActivity = agents
                 processTable = Dictionary(snapshot.processes.map { ($0.identity.pid, $0) }, uniquingKeysWith: { first, _ in first })
                 checkStopProgress(snapshot.processes)
+                strays = snapshot.ready ? StrayProcesses.find(records: processTable, arguments: ProcessArguments.cached,
+                                                              project: originProject).filter { !$0.isHeld } : []
                 ready = snapshot.ready
                 // A reading turned on mid-sample keeps the value filled in when it was turned on.
                 menuBarReadings = MenuBarReadings(system: snapshot.system, ready: ready,
@@ -398,6 +402,25 @@ final class Monitor: ObservableObject {
         default: effect = "Its windows are closing."
         }
         notice = "Ended a \(role.label(browser: browser).lowercased()) process in \(workload.name). \(effect)"
+    }
+
+    /// Stops each stray and everything it started, children first, then force-stops whatever ignored that a few seconds later.
+    func stopStrays(_ strays: [StrayProcess]) {
+        let sent = strays.flatMap(\.tree).filter { spare_stop($0.identity.pid, $0.identity.started) == 0 }
+        let count = "\(strays.count) stray\(strays.count == 1 ? "" : "s")"
+        guard !sent.isEmpty else {
+            notice = "Those processes had already exited, or macOS didn’t allow Spare to stop them."
+            return
+        }
+        notice = "Stopping \(count)…"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            let forced = sent.filter {
+                spare_matches($0.identity.pid, $0.identity.started) && spare_signal($0.identity.pid, $0.identity.started, SIGKILL) == 0
+            }.count
+            self?.notice = forced == 0
+                ? "Stopped \(count) and everything \(strays.count == 1 ? "it" : "they") started."
+                : "Stopped \(count). \(forced) process\(forced == 1 ? "" : "es") ignored the request, so Spare force-stopped \(forced == 1 ? "it" : "them")."
+        }
     }
 
     private func trackStop(_ name: String, identities: Set<ProcessIdentity>) {
