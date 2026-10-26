@@ -39,7 +39,7 @@ final class StrayProcessTests: XCTestCase {
         XCTAssertEqual(strays[0].tree.map(\.identity.pid), [12, 11, 10])
         XCTAssertEqual(strays[0].memory, 54)
         XCTAssertFalse(strays[0].isHeld)
-        XCTAssertTrue(strays[0].reason.hasPrefix("Running 3h after"))
+        XCTAssertEqual(strays[0].reason, "Started 3h ago · the tool that started it has exited · runs from the Trash, which can keep it from emptying")
     }
 
     func testLiveAgentHoldsItsServers() {
@@ -74,7 +74,9 @@ final class StrayProcessTests: XCTestCase {
         ]) }
         let arguments: (ProcessIdentity) -> [String] = { $0.pid == 31 ? ["node", "/w/site/node_modules/.bin/next", "dev"] : [] }
         XCTAssertTrue(StrayProcesses.find(records: records(5), arguments: arguments, now: now).isEmpty)
-        XCTAssertEqual(StrayProcesses.find(records: records(30), arguments: arguments, now: now).map(\.reason), ["Running for 30h"])
+        let strays = StrayProcesses.find(records: records(30), arguments: arguments, now: now)
+        XCTAssertEqual(strays.map(\.reason), ["Running for 30h"])
+        XCTAssertEqual(strays.map(\.name), ["next dev · site"])
     }
 
     func testPublicTunnelsRankFirst() {

@@ -87,7 +87,7 @@ public enum StrayProcesses {
                 if match.kind == .devServer && age >= devServerAge {
                     parts.append("Running for \(duration(age))")
                 } else if orphaned && age >= minimumAge {
-                    parts.append("Running \(duration(age)) after the tool that started it exited")
+                    parts.append("Started \(duration(age)) ago · the tool that started it has exited")
                 } else {
                     return nil
                 }
@@ -96,8 +96,11 @@ public enum StrayProcesses {
             }
             if match.kind == .tunnel { parts.insert("Reachable from the internet", at: 0) }
             if match.kind == .fileServer { parts.insert("Shares a folder with your network", at: 0) }
-            if root.path.contains("/.Trash/") { parts.append("runs from the Trash, which can keep it from emptying") }
-            return StrayProcess(kind: match.kind, name: match.name, root: root, tree: tree(from: root, children: children),
+            let processes = tree(from: root, children: children)
+            if processes.contains(where: { $0.path.contains("/.Trash/") }) { parts.append("runs from the Trash, which can keep it from emptying") }
+            let folder = folderName(project(root.directory))
+            let name = [.devServer, .fileServer].contains(match.kind) && !folder.isEmpty ? "\(match.name) · \(folder)" : match.name
+            return StrayProcess(kind: match.kind, name: name, root: root, tree: processes,
                                 reason: parts.joined(separator: " · "), heldBy: heldBy)
         }.sorted { left, right in
             let rank = { (kind: StrayProcess.Kind) in kind == .tunnel ? 0 : kind == .fileServer ? 1 : 2 }
