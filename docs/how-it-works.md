@@ -38,11 +38,17 @@ Known macOS processes are labeled only when they run from Apple's system locatio
 
 Spare records when each app comes to the front. Apps that can quit, have been idle for two or more hours, and use at least 300 MB are marked. Idle time errs short: if Spare wasn't running for more than ten minutes before it launched, earlier activity isn't trusted, and relaunching an app resets its clock.
 
+## Left running by agents
+
+Coding agents start processes and walk away. Spare looks for public tunnels (cloudflared, ngrok), file servers (`python -m http.server`, http-server), headless browsers (Chrome for Testing, chrome-headless-shell, agent-browser), MCP servers, and dev servers (next dev, vite, webpack serve). It follows each one up to the topmost matching process, so a wrapper such as `npm exec` and everything under it count as one stray.
+
+If a live agent session sits above it, the process is held and left alone. Otherwise it's a stray when launchd became its parent because the tool that started it exited, and it's been running for at least 15 minutes. Dev servers also count after a day even when a terminal still owns them. Tunnels and file servers are listed first, since other machines can reach them. Stopping one stops its whole tree, children first, and force-stops anything still running three seconds later. Crash reporters are skipped: they're tiny and exit on their own.
+
 ## The command line
 
 `spare` takes its own reading each time it runs (two samples a second apart, for CPU) and groups processes with the same code as the panel, so names and totals match. `spare idle` reads the times Spare saved for when each app was last in front, and only trusts activity seen since the running Spare launched. `spare recap` reads the saved recap history without changing it. Leftover sessions are browser processes that run the browser itself rather than a helper, whose launcher has exited or runs detached in the background, such as an agent-browser daemon.
 
-`spare quit` and `spare leftovers --close` don't close anything themselves. They send a request to the running app as a local distributed notification. The app looks the target up again in its own latest reading, shows the request in its panel with who asked (found from the command's parent processes, such as *Claude in website*), and acts only if you approve. Its reply says whether you approved, declined, or the request couldn't be shown. A request that gets no answer within the timeout (120 seconds by default), or that you withdraw with Control-C, is removed from the panel. Only one request is shown at a time. Any app on your Mac can post these notifications, but the worst one can do is ask you a question.
+`spare quit`, `spare leftovers --close`, and `spare strays --close` don't close anything themselves. They send a request to the running app as a local distributed notification. The app looks the target up again in its own latest reading, shows the request in its panel with who asked (found from the command's parent processes, such as *Claude in website*), and acts only if you approve. Its reply says whether you approved, declined, or the request couldn't be shown. A request that gets no answer within the timeout (120 seconds by default), or that you withdraw with Control-C, is removed from the panel. Only one request is shown at a time. Any app on your Mac can post these notifications, but the worst one can do is ask you a question.
 
 ## Privacy, in full
 

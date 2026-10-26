@@ -21,4 +21,6 @@ bool spare_matches(int pid, uint64_t started);
 /// When any process started, including ones outside the user's account.
 bool spare_start_time(int pid, uint64_t *started);
 int spare_stop(int pid, uint64_t started);
+/// Like spare_stop, with any signal, such as SIGKILL for a process that ignored SIGTERM.
+int spare_signal(int pid, uint64_t started, int signal);
 #endif

@@ -171,6 +171,41 @@ enum Commands {
         print("\nTo close them: spare leftovers --close   (you approve it in Spare’s panel first)")
     }
 
+    private struct StrayItem: Codable {
+        var name: String
+        var kind: String
+        var pid: Int32
+        var processCount: Int
+        var memoryBytes: UInt64
+        var memory: String
+        var reason: String
+        var heldBy: String?
+    }
+
+    static func strays(_ options: Options) {
+        let reading = Reading.take()
+        let filter = options.positional.first
+        let found = reading.strays.filter { filter == nil || $0.name.localizedCaseInsensitiveContains(filter ?? "") }
+        let loose = found.filter { !$0.isHeld }
+        if options.close {
+            guard !loose.isEmpty else { Output.fail("No strays right now, so there’s nothing to stop.") }
+            Requests.send(.init(action: .stopStrays, target: filter ?? "", requester: reading.requester), options: options)
+        }
+        let items = found.map {
+            StrayItem(name: $0.name, kind: $0.kind.rawValue, pid: $0.root.identity.pid, processCount: $0.tree.count,
+                      memoryBytes: $0.memory, memory: DisplayFormat.memory($0.memory), reason: $0.reason, heldBy: $0.heldBy)
+        }
+        if Output.json { return Output.print(items) }
+        let held = found.count - loose.count
+        let heldNote = held == 0 ? "" : "\(held) more belong\(held == 1 ? "s" : "") to a live agent session, so Spare leaves \(held == 1 ? "it" : "them") alone."
+        guard !loose.isEmpty else { return print(["No strays right now.", heldNote].filter { !$0.isEmpty }.joined(separator: " ")) }
+        print(TextTable.render([["NAME", "KIND", "PID", "MEMORY", "WHY IT'S A STRAY"]] + loose.map {
+            [$0.name, $0.kind.label, "\($0.root.identity.pid)", DisplayFormat.memory($0.memory), $0.reason]
+        }, rightAligned: [2, 3], maxWidth: [0: 26]))
+        if !heldNote.isEmpty { print("\n" + heldNote) }
+        print("\nTo stop them: spare strays --close   (you approve it in Spare’s panel first)")
+    }
+
     private struct RecapItem: Codable {
         var name: String
         var kind: String

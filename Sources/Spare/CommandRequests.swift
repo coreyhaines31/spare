@@ -63,6 +63,7 @@ extension Monitor {
         switch message.action {
         case .quit: requestQuit(message)
         case .closeLeftovers: requestLeftovers(message)
+        case .stopStrays: requestStrays(message)
         }
     }
 
@@ -125,6 +126,27 @@ extension Monitor {
         return Leftovers.find(workloads, records: processTable, apps: names, arguments: { ProcessArguments.cached(for: $0) },
                               project: originProject)
             .filter { app.isEmpty || $0.app.name.localizedCaseInsensitiveContains(app) }
+    }
+
+    private func requestStrays(_ message: CommandRequest.Message) {
+        let found = strays.filter { message.target.isEmpty || $0.name.localizedCaseInsensitiveContains(message.target) }
+        guard !found.isEmpty else { return reply(message, .notFound, "No strays right now.") }
+        let memory = found.reduce(UInt64(0)) { $0 + $1.memory }
+        let count = "\(found.count) stray\(found.count == 1 ? "" : "s")"
+        let names = Array(Set(found.map(\.name))).sorted().prefix(4).joined(separator: ", ")
+        let roots = Set(found.map(\.root.identity))
+        present(PendingRequest(
+            message: message, title: "Stop \(count)?",
+            detail: "\(requester(message)) asked Spare to stop \(count) (\(names)), using \(DisplayFormat.memory(memory)). "
+                + "No live agent owns them. Everything they started stops too.",
+            action: "Stop"
+        ) { [weak self] in
+            guard let self else { return (.notFound, "Spare closed before answering.", []) }
+            let current = self.strays.filter { roots.contains($0.root.identity) }
+            guard !current.isEmpty else { return (.notFound, "Those had already exited.", []) }
+            self.stopStrays(current)
+            return (.approved, "Stopping \(current.count) stray\(current.count == 1 ? "" : "s").", current.map(\.root.identity))
+        })
     }
 
     private func requester(_ message: CommandRequest.Message) -> String {
