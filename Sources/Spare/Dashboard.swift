@@ -124,6 +124,7 @@ struct Dashboard: View {
             } else if let growing, let trend = monitor.memoryTrends[growing.id] {
                 suggestionRow(growing, subtitle: trend.summary, symbol: "chart.line.uptrend.xyaxis")
             }
+            if !monitor.strays.isEmpty { StraysSection(monitor: monitor) }
             if !monitor.idleApps.isEmpty { IdleAppsSection(monitor: monitor) }
             Divider()
             VStack(spacing: 10) {

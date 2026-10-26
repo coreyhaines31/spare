@@ -12,6 +12,8 @@ Commands:
   show <name>        What something is, what closing it affects, and its processes
   idle               Apps left open but unused for 2+ hours (needs Spare running)
   leftovers [app]    Browser sessions left open by automation tools and agents
+  strays [name]      Headless browsers, MCP servers, tunnels, and old dev servers
+                     that agents left running and nothing owns anymore
   recap [period]     Saved history: today (default), week, or 7d
   quit <name>        Ask to quit an app or stop a project or agent
   open               Open Spare
@@ -22,13 +24,13 @@ Options:
                      Only show that kind in `list`
   --sort cpu         Sort `list` by CPU instead of memory
   --limit N          Rows in `list` (default 15, 0 for all)
-  --close            With `leftovers`: ask to close them
-  --timeout N        Seconds `quit` and `leftovers --close` wait for an answer (default 120)
+  --close            With `leftovers` or `strays`: ask to close them
+  --timeout N        Seconds `quit` and `--close` wait for an answer (default 120)
 
 <name> is a name from `spare list` (any case; the start of a name works when it's
 unique), an id from --json output, a process ID, or a port.
 
-Nothing closes without the person's approval. `quit` and `leftovers --close`
+Nothing closes without the person's approval. `quit` and `--close`
 show the request in Spare's panel and wait for them to approve or decline it.
 They need Spare running; every other command works on its own.
 
@@ -104,6 +106,7 @@ case "show":
     Commands.show(options.positional.joined(separator: " "))
 case "idle": Commands.idle()
 case "leftovers": Commands.leftovers(options)
+case "strays": Commands.strays(options)
 case "recap": Commands.recap(options)
 case "quit", "stop":
     guard !options.positional.isEmpty else { Output.fail("Which one? Usage: spare quit <name>") }

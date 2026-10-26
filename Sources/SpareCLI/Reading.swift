@@ -53,6 +53,11 @@ struct Reading {
                        project: resolver.project)
     }
 
+    /// Strays plus the candidates a live agent holds.
+    var strays: [StrayProcess] {
+        StrayProcesses.find(records: records, arguments: { ProcessArguments.cached(for: $0) }, project: resolver.project)
+    }
+
     /// Who is running this command, such as "Claude in website", found from its parent processes.
     var requester: String? {
         records[getpid()].flatMap { origin(of: $0).requesterName }

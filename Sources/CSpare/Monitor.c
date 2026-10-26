@@ -58,14 +58,16 @@ bool spare_matches(int pid, uint64_t started) {
     return spare_process(pid, &process, false) && process.started == started;
 }
 
-int spare_stop(int pid, uint64_t started) {
+int spare_stop(int pid, uint64_t started) { return spare_signal(pid, started, SIGTERM); }
+
+int spare_signal(int pid, uint64_t started, int signal) {
     if (pid <= 1 || pid == getpid()) return EPERM;
     SpareProcess process;
     if (!spare_process(pid, &process, true) || process.started != started) return ESRCH;
     if (process.path[0] == '\0' || strncmp(process.path, "/System/", 8) == 0 ||
         strncmp(process.path, "/usr/libexec/", 13) == 0 ||
         strncmp(process.path, "/usr/sbin/", 10) == 0) return EPERM;
-    return kill(pid, SIGTERM) == 0 ? 0 : errno;
+    return kill(pid, signal) == 0 ? 0 : errno;
 }
 
 bool spare_system(SpareSystem *output) {

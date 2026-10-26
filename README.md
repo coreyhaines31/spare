@@ -102,13 +102,14 @@ spare list --agents --json  # just AI agents, as JSON
 spare show "Google Chrome"  # what it is, what closing it affects, what's inside
 spare idle                  # apps you haven't used in 2+ hours
 spare leftovers             # browser sessions automation tools left open
+spare strays                # headless browsers, MCP servers, and dev servers agents left running
 spare recap week            # saved history for this week
 spare quit Slack            # ask to quit; you approve it in Spare's panel
 ```
 
 Every command takes `--json`. `spare --help` lists all of them, with options and exit codes.
 
-**Nothing closes without you.** `spare quit` and `spare leftovers --close` open Spare's panel with the request, such as *Claude in website asked Spare to quit Slack*, and wait for you to choose **Quit** or **Don't Quit**. The command then reports what you decided. These two need Spare running; everything else works on its own.
+**Nothing closes without you.** `spare quit`, `spare leftovers --close`, and `spare strays --close` open Spare's panel with the request, such as *Claude in website asked Spare to quit Slack*, and wait for you to choose **Quit** or **Don't Quit**. The command then reports what you decided. These need Spare running; everything else works on its own.
 
 ### Let your agent use it
 
@@ -120,7 +121,8 @@ Use it when I ask what's slowing my Mac down or what I can close, or before star
 - `spare status` and `spare list --json` show what's using CPU and memory, grouped into apps, projects, and AI agents.
 - `spare show <name>` explains what something is and what closing it would affect.
 - `spare idle` and `spare leftovers` find apps I haven't used and browser sessions that automation tools left open.
-Never kill processes yourself. To close something, run `spare quit <name>` or `spare leftovers --close`. I approve or decline it in Spare's panel, and the command tells you which.
+- `spare strays` finds headless browsers, MCP servers, tunnels, and dev servers that agents left running and nothing owns anymore.
+Never kill processes yourself. To close something, run `spare quit <name>`, `spare leftovers --close`, or `spare strays --close`. I approve or decline it in Spare's panel, and the command tells you which.
 ```
 
 ## Troubleshooting

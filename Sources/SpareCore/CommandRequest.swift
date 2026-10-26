@@ -10,12 +10,13 @@ public enum CommandRequest {
     public enum Action: String {
         case quit
         case closeLeftovers = "close-leftovers"
+        case stopStrays = "stop-strays"
     }
 
     public struct Message: Equatable {
         public var id: String
         public var action: Action
-        /// A workload id or name for `quit`; an optional app name for `closeLeftovers`.
+        /// A workload id or name for `quit`; an optional app name for `closeLeftovers`; an optional name for `stopStrays`.
         public var target: String
         public var requester: String?
 
