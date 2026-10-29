@@ -21,10 +21,10 @@
   "keywords": ["mac", "macos", "memory", "cpu", "activity monitor", "processes", "agents"],
   "server": {
     "type": "node",
-    "entry_point": "server/index.js",
+    "entry_point": "server/index.mjs",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": ["${__dirname}/server/index.mjs"],
       "env": {
         "SPARE_CLI": "${user_config.spare_cli}"
       }

@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Claude Desktop extension for Spare",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=server/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=server/index.mjs",
     "lint": "tsc --noEmit",
     "test": "npm run build && node test/smoke.mjs",
     "pack": "npm run build && mcpb validate manifest.json && mcpb pack . dist/spare.mcpb"
