@@ -72,4 +72,4 @@ A few principles keep Spare trustworthy:
 TEAM_ID=… DEVELOPMENT_IDENTITY="Apple Development: …" NOTARY_PROFILE=… bash scripts/release.sh
 ```
 
-Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist` first, and release from `main`. The script doesn't publish anything. Create the GitHub release with the DMG, `appcast.xml`, and `SHA256SUMS.txt` attached; the app reads its update feed from the latest release. Then run `bash scripts/update-homebrew-cask.sh <version>` to point the Homebrew cask at it.
+Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist` first, and release from `main`. The script doesn't publish anything. Create the GitHub release with the DMG, `appcast.xml`, `SHA256SUMS.txt`, and the Claude Desktop extension (`cd mcpb && npm install && npm run pack`, then attach `mcpb/dist/spare.mcpb`) attached; the app reads its update feed from the latest release, and the README and website link to `releases/latest/download/spare.mcpb`. Then run `bash scripts/update-homebrew-cask.sh <version>` to point the Homebrew cask at it.
