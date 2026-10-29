@@ -125,6 +125,12 @@ Use it when I ask what's slowing my Mac down or what I can close, or before star
 Never kill processes yourself. To close something, run `spare quit <name>`, `spare leftovers --close`, or `spare strays --close`. I approve or decline it in Spare's panel, and the command tells you which.
 ```
 
+### Use Spare from Claude Desktop
+
+Download [`spare.mcpb`](https://github.com/coreyhaines31/spare/releases/latest/download/spare.mcpb) and double-click it (or drag it onto Claude Desktop) to install the Spare extension. Then ask Claude things like *what's using my Mac?*, *why was it slow this morning?*, or *what did my agents leave running?*
+
+The extension runs the `spare` tool from your installed Spare app, so install Spare first. It only reads: Claude can't quit or stop anything through it. The source is in [`mcpb/`](mcpb/); `cd mcpb && npm install && npm run pack` builds `mcpb/dist/spare.mcpb`, and `npm test` calls every tool on your Mac.
+
 ## Troubleshooting
 
 **I can't find Spare in the menu bar.**
