@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json",
+  "manifest_version": "0.4",
+  "name": "spare",
+  "display_name": "Spare",
+  "version": "0.1.0",
+  "description": "Ask Claude what's using your Mac: CPU, memory, AI agents, idle apps, and processes agents left running.",
+  "long_description": "Spare is a free, open-source menu bar app that shows which apps, projects, and AI agents are using your Mac. This extension lets Claude read the same answers through Spare's `spare` command line tool.\n\nAsk things like \"what's using my Mac?\", \"why was it slow this morning?\", or \"what did my agents leave running?\".\n\nRequires the Spare app (https://spareformac.com). Everything is read-only: Claude can't quit or stop anything. Spare covers CPU and memory, not disk space.",
+  "author": {
+    "name": "Corey Haines",
+    "url": "https://spareformac.com"
+  },
+  "homepage": "https://spareformac.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coreyhaines31/spare"
+  },
+  "support": "https://github.com/coreyhaines31/spare/issues",
+  "license": "MIT",
+  "icon": "icon.png",
+  "keywords": ["mac", "macos", "memory", "cpu", "activity monitor", "processes", "agents"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "SPARE_CLI": "${user_config.spare_cli}"
+      }
+    }
+  },
+  "user_config": {
+    "spare_cli": {
+      "type": "file",
+      "title": "Spare command line tool (optional)",
+      "description": "Leave empty to find Spare automatically in Applications, Homebrew, or Spotlight.",
+      "required": false
+    }
+  },
+  "tools": [
+    { "name": "spare_status", "description": "CPU, memory, and memory pressure right now" },
+    { "name": "spare_list", "description": "Apps, projects, and AI agents using the most" },
+    { "name": "spare_show", "description": "What one item is and what closing it affects" },
+    { "name": "spare_idle", "description": "Apps left open but unused for 2+ hours" },
+    { "name": "spare_strays", "description": "Processes agents left running" },
+    { "name": "spare_leftovers", "description": "Browser sessions left open by automation" },
+    { "name": "spare_recap", "description": "CPU and memory history: today or this week" }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin"],
+    "runtimes": { "node": ">=20.0.0" }
+  }
+}
