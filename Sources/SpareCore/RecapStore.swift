@@ -40,7 +40,8 @@ public final class RecapStore {
         guard !blocked else { return }
         if let sample, enabled { history.record(sample, workloads: workloads, ready: ready) }
         else { history.pause(); history.prune(at: now) }
-        if now.timeIntervalSince(lastSave) >= 60 { save(at: now) }
+        // Saving re-encodes all of history; sleep and quit save too, so a crash is all this risks.
+        if now.timeIntervalSince(lastSave) >= 300 { save(at: now) }
     }
     public func save(at date: Date = Date()) {
         guard !blocked else { return }

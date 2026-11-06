@@ -2,7 +2,7 @@ import Foundation
 
 public enum ProcessClassifier {
     public static func developerKind(_ process: ProcessRecord) -> WorkloadKind? {
-        let executable = URL(fileURLWithPath: process.path).lastPathComponent.lowercased()
+        let executable = (process.path as NSString).lastPathComponent.lowercased()
         let name = process.name.lowercased()
         let path = process.path.lowercased()
         if ["claude", "codex", "aider", "ollama", "opencode"].contains(executable) ||
