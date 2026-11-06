@@ -9,13 +9,19 @@ public struct Snapshot {
 
 public final class Sampler {
     private var previous: [ProcessIdentity: UInt64] = [:]
+    /// Processes outside your account come from running `ps`, which costs more than a sample, so
+    /// they're read every `otherAccountInterval` seconds and reused in between.
+    private var otherAccount: [ProcessRecord] = []
+    private var otherAccountPrevious: [ProcessIdentity: UInt64] = [:]
+    private var otherAccountTime: TimeInterval?
+    static let otherAccountInterval: TimeInterval = 15
     private var ticks: [UInt32]?
     private var time: TimeInterval?
     private let cores = Double(ProcessInfo.processInfo.activeProcessorCount)
 
     public init() {}
 
-    public func reset() { previous = [:]; ticks = nil; time = nil }
+    public func reset() { previous = [:]; ticks = nil; time = nil; otherAccount = []; otherAccountPrevious = [:]; otherAccountTime = nil }
 
     public func sample() -> Snapshot? {
         var raw = SpareSystem()
@@ -55,15 +61,30 @@ public final class Sampler {
             }
             processes.append(record)
         }
-        // Shipped system processes outside your account, measured the same way but with resident memory as the estimate.
+        previous = counters
         let readable = Set(processes.map(\.identity.pid))
-        for row in OtherAccountProcesses.read() where !readable.contains(row.pid) && SystemProcessCatalog.isShipped(row.path) {
+        if !ready || otherAccountTime.map({ now - $0 >= Self.otherAccountInterval }) ?? true {
+            readOtherAccount(now: now, ready: ready)
+        }
+        processes += otherAccount.filter { !readable.contains($0.identity.pid) }
+        return Snapshot(system: SystemSample(cpu: cpu, memory: raw.used, physical: raw.physical,
+            compressed: raw.compressed, swap: raw.swap, pressure: MemoryPressure(level: raw.pressure)),
+            processes: processes, ready: ready)
+    }
+
+    /// Shipped system processes outside your account, measured the same way but with resident memory as the estimate.
+    private func readOtherAccount(now: TimeInterval, ready: Bool) {
+        let elapsed = otherAccountTime.map { now - $0 } ?? 0
+        let measured = ready && elapsed > 0 && elapsed < 60
+        var counters: [ProcessIdentity: UInt64] = [:]
+        var records: [ProcessRecord] = []
+        for row in OtherAccountProcesses.read() where SystemProcessCatalog.isShipped(row.path) {
             var started: UInt64 = 0
             guard spare_start_time(row.pid, &started) else { continue }
             let identity = ProcessIdentity(pid: row.pid, started: started)
             let cpuNanoseconds = UInt64(row.cpuSeconds * 1_000_000_000)
             var usage = 0.0
-            if ready, let old = previous[identity], cpuNanoseconds >= old {
+            if measured, let old = otherAccountPrevious[identity], cpuNanoseconds >= old {
                 usage = min(100, Double(cpuNanoseconds - old) / (elapsed * 1_000_000_000 * cores) * 100)
             }
             let record = ProcessRecord(pid: row.pid, started: started, parent: row.parent,
@@ -72,12 +93,11 @@ public final class Sampler {
             // A runtime like /usr/bin/python3 running as root isn't your project, and Spare couldn't stop it.
             guard ProcessClassifier.developerKind(record) == nil else { continue }
             counters[identity] = cpuNanoseconds
-            processes.append(record)
+            records.append(record)
         }
-        previous = counters
-        return Snapshot(system: SystemSample(cpu: cpu, memory: raw.used, physical: raw.physical,
-            compressed: raw.compressed, swap: raw.swap, pressure: MemoryPressure(level: raw.pressure)),
-            processes: processes, ready: ready)
+        otherAccount = records
+        otherAccountPrevious = counters
+        otherAccountTime = now
     }
 
     private func string<T>(_ value: inout T) -> String {
