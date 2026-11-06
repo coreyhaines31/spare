@@ -67,7 +67,7 @@ public final class Sampler {
                 usage = min(100, Double(cpuNanoseconds - old) / (elapsed * 1_000_000_000 * cores) * 100)
             }
             let record = ProcessRecord(pid: row.pid, started: started, parent: row.parent,
-                                       name: URL(fileURLWithPath: row.path).lastPathComponent, path: row.path,
+                                       name: (row.path as NSString).lastPathComponent, path: row.path,
                                        memory: row.residentBytes, cpu: usage)
             // A runtime like /usr/bin/python3 running as root isn't your project, and Spare couldn't stop it.
             guard ProcessClassifier.developerKind(record) == nil else { continue }

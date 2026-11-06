@@ -111,7 +111,7 @@ public enum StrayProcesses {
     }
 
     static func classify(_ process: ProcessRecord, arguments: () -> [String]) -> (kind: StrayProcess.Kind, name: String)? {
-        let executable = URL(fileURLWithPath: process.path).lastPathComponent.lowercased()
+        let executable = (process.path as NSString).lastPathComponent.lowercased()
         let path = process.path.lowercased()
         if ["cloudflared", "ngrok"].contains(executable) { return (.tunnel, executable) }
         if executable.hasPrefix("agent-browser") { return (.headlessBrowser, "agent-browser") }
@@ -164,6 +164,6 @@ public enum StrayProcesses {
     }
 
     private static func folderName(_ path: String) -> String {
-        path.hasPrefix("/") && path != "/" ? URL(fileURLWithPath: path).lastPathComponent : ""
+        path.hasPrefix("/") && path != "/" ? (path as NSString).lastPathComponent : ""
     }
 }
