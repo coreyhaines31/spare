@@ -69,7 +69,7 @@ public enum WorkloadGrouper {
     }
 
     private static func developerGroup(_ process: ProcessRecord, kind: WorkloadKind, project: String) -> Workload {
-        let folder = project.isEmpty ? "Unknown project" : URL(fileURLWithPath: project).lastPathComponent
+        let folder = project.isEmpty ? "Unknown project" : (project as NSString).lastPathComponent
         let agent = ProcessClassifier.agentName(process)
         let name = kind == .agent ? "\(agent) · \(folder)" : folder
         let scope = project.isEmpty ? "pid:\(process.identity.pid)" : project

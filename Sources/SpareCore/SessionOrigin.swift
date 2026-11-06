@@ -16,7 +16,7 @@ public enum CommandSummary {
             arguments = Array(arguments.dropFirst(runner.count))
         }
         var rest = arguments.drop { argument in
-            let name = URL(fileURLWithPath: argument).lastPathComponent
+            let name = (argument as NSString).lastPathComponent
             return interpreters.contains(name.lowercased()) || name.lowercased().hasPrefix("python") || argument.hasPrefix("-")
         }
         guard let first = rest.first else { return nil }
@@ -38,7 +38,7 @@ public enum CommandSummary {
             if let scope = parts.first, scope.hasPrefix("@"), parts.count > 1 { return "\(scope)/\(parts[1])" }
             if let package = parts.first { return String(package) }
         }
-        let name = URL(fileURLWithPath: path).lastPathComponent
+        let name = (path as NSString).lastPathComponent
         for suffix in [".js", ".mjs", ".cjs", ".ts", ".py", ".rb"] where name.hasSuffix(suffix) {
             return String(name.dropLast(suffix.count))
         }
@@ -120,6 +120,6 @@ public enum SessionOrigin: Equatable {
     }
 
     private static func folderName(_ path: String) -> String {
-        path.hasPrefix("/") && path != "/" ? URL(fileURLWithPath: path).lastPathComponent : ""
+        path.hasPrefix("/") && path != "/" ? (path as NSString).lastPathComponent : ""
     }
 }

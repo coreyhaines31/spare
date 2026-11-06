@@ -39,6 +39,7 @@ final class Monitor: ObservableObject {
     private var screenObserver: NSObjectProtocol?
     var shownMenuBarStats: [MenuBarStat] { MenuBarStat.shown(menuBarStats, compact: compactOnLaptopScreen && laptopScreenOnly) }
     @Published var loginStatus = SMAppService.mainApp.status
+    private var loginCheckedAt: TimeInterval = 0
     var onOpenWindow: (() -> Void)?
     var onOpenRecap: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
@@ -68,6 +69,15 @@ final class Monitor: ObservableObject {
             loginStatus = SMAppService.mainApp.status
             notice = "Couldn’t change launch at login: \(error.localizedDescription)"
         }
+    }
+
+    /// Notices a change made in System Settings. Asking costs a round trip to the system, so once a minute is enough.
+    private func refreshLoginStatus() {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - loginCheckedAt >= 60 else { return }
+        loginCheckedAt = now
+        let status = SMAppService.mainApp.status
+        if status != loginStatus { loginStatus = status }
     }
 
     /// Turns on launch at login the first time an installed copy runs. Only once, so turning it off sticks.
@@ -115,7 +125,7 @@ final class Monitor: ObservableObject {
     private func refresh() {
         guard !busy, !sleeping else { return }
         busy = true
-        loginStatus = SMAppService.mainApp.status
+        refreshLoginStatus()
         let apps = NSWorkspace.shared.runningApplications.compactMap { app -> AppRecord? in
             guard let url = app.bundleURL, let name = app.localizedName else { return nil }
             return AppRecord(pid: app.processIdentifier, name: name, path: url.path,
