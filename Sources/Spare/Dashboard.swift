@@ -13,12 +13,17 @@ struct Dashboard: View {
     @State private var filter = WorkloadFilter.all
     private var visible: [Workload] {
         monitor.workloads.filter {
-            (includeBackground || $0.kind != .background) && filter.includes($0) && $0.matches(query)
+            (includeBackground || $0.kind != .background || $0.needsAttention) && filter.includes($0) && $0.matches(query)
         }.sorted {
             let left = sortCPU ? $0.cpu : Double($0.memory)
             let right = sortCPU ? $1.cpu : Double($1.memory)
             return left == right ? $0.id < $1.id : left > right
         }
+    }
+    /// The largest pile of copies of one unidentified program, if any is big enough to look like a runaway.
+    private var swarm: Workload? {
+        monitor.workloads.filter { $0.needsAttention && $0.processes.count >= Workload.swarmSize }
+            .max { $0.processes.count < $1.processes.count }
     }
     private var growing: Workload? {
         monitor.workloads.filter { monitor.memoryTrends[$0.id]?.isGrowing == true }.max {
@@ -138,6 +143,10 @@ struct Dashboard: View {
             ResourceSummary(monitor: monitor, sortCPU: $sortCPU)
             if let recap = monitor.awayRecap {
                 AwayRecapView(recap: recap, monitor: monitor).padding(.horizontal, 16).padding(.bottom, 12)
+            }
+            if let swarm {
+                suggestionRow(swarm, subtitle: "\(swarm.processes.count) copies running · \(DisplayFormat.percent(swarm.cpu)) CPU · Something may be stuck in a loop",
+                              symbol: "exclamationmark.triangle")
             }
             if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
                 suggestionRow(suggestion.workload, subtitle: suggestionSubtitle(suggestion.workload), symbol: "exclamationmark.circle")
