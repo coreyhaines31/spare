@@ -72,6 +72,8 @@ struct WorkloadRow: View {
 
 struct ResourceSummary: View {
     @ObservedObject var monitor: Monitor
+    /// Clicking a reading sorts the list below by that resource.
+    @Binding var sortCPU: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 9) {
@@ -84,9 +86,11 @@ struct ResourceSummary: View {
             }
             if let sample = monitor.samples.last {
                 HStack(alignment: .top, spacing: 14) {
-                    cpuReading(sample)
+                    Button { sortCPU = true } label: { cpuReading(sample).contentShape(Rectangle()) }
+                        .buttonStyle(.plain).help("Sort the list by CPU")
                     Divider().frame(height: 58)
-                    pressureReading(sample)
+                    Button { sortCPU = false } label: { pressureReading(sample).contentShape(Rectangle()) }
+                        .buttonStyle(.plain).help("Sort the list by memory")
                 }
             }
         }.padding(16)
