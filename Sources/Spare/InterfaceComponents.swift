@@ -72,12 +72,12 @@ struct WorkloadRow: View {
 
 struct ResourceSummary: View {
     @ObservedObject var monitor: Monitor
+    /// Clicking a reading sorts the list below by that resource.
+    @Binding var sortCPU: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 9) {
-                Image(systemName: monitor.error != nil ? "questionmark.circle" : monitor.health.level == 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .foregroundStyle(monitor.error != nil || !monitor.ready ? Color.secondary : [Color.green, .orange, .red][min(monitor.health.level, 2)])
-                    .font(.title3)
+                Image(systemName: headlineSymbol).foregroundStyle(headlineColor).font(.title3)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(monitor.error != nil ? "Readings unavailable" : monitor.health.title).font(.headline)
                     Text(monitor.error ?? monitor.health.message).font(.callout).foregroundStyle(.secondary)
@@ -86,12 +86,26 @@ struct ResourceSummary: View {
             }
             if let sample = monitor.samples.last {
                 HStack(alignment: .top, spacing: 14) {
-                    cpuReading(sample)
+                    Button { sortCPU = true } label: { cpuReading(sample).contentShape(Rectangle()) }
+                        .buttonStyle(.plain).help("Sort the list by CPU")
                     Divider().frame(height: 58)
-                    pressureReading(sample)
+                    Button { sortCPU = false } label: { pressureReading(sample).contentShape(Rectangle()) }
+                        .buttonStyle(.plain).help("Sort the list by memory")
                 }
             }
         }.padding(16)
+    }
+
+    /// The green check is only for a calm Mac. A maxed CPU that isn't a warning yet gets a neutral gauge.
+    private var headlineSymbol: String {
+        if monitor.error != nil { return "questionmark.circle" }
+        if monitor.health.level > 0 { return "exclamationmark.circle.fill" }
+        return monitor.health.isCalm ? "checkmark.circle.fill" : "gauge.with.needle.fill"
+    }
+    private var headlineColor: Color {
+        if monitor.error != nil || !monitor.ready { return .secondary }
+        if monitor.health.level > 0 { return monitor.health.level == 1 ? .orange : .red }
+        return monitor.health.isCalm ? .green : .secondary
     }
 
     private func cpuReading(_ sample: SystemSample) -> some View {
@@ -101,9 +115,17 @@ struct ResourceSummary: View {
             Text(monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…").fontWeight(.semibold)
             UsageBar(fraction: monitor.ready ? sample.cpu / 100 : 0, color: busy ? .orange : .accentColor)
                 .accessibilityHidden(true)
-            Text(monitor.ready ? "\(100 - Int(min(max(sample.cpu, 0), 100).rounded()))% available" : " ")
-                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Text(monitor.ready ? cpuCaption(sample) : " ")
+                .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
         }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Names whatever is using the most CPU, so the answer to "what's busy?" is in the header.
+    private func cpuCaption(_ sample: SystemSample) -> String {
+        if let top = monitor.workloads.max(by: { $0.cpu < $1.cpu }), top.cpu >= 5 {
+            return "Most: \(top.name) \(DisplayFormat.percent(top.cpu))"
+        }
+        return "\(100 - Int(min(max(sample.cpu, 0), 100).rounded()))% available"
     }
 
     private func pressureReading(_ sample: SystemSample) -> some View {
