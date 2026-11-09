@@ -29,6 +29,19 @@ final class MonitorTests: XCTestCase {
         XCTAssertEqual(groups.first(where: { $0.kind == .background })?.canStop, false)
     }
 
+    func testCopiesOfAnUnidentifiedProgramShareARow() {
+        let swarm = (0..<40).map {
+            ProcessRecord(pid: Int32(100 + $0), started: UInt64($0), name: "fuelgauge", path: "/opt/homebrew/bin/fuelgauge", cpu: 2)
+        }
+        let groups = WorkloadGrouper.group(swarm + [ProcessRecord(pid: 9, name: "mystery", path: "/usr/local/bin/mystery")], apps: [])
+        let group = groups.first { $0.name == "fuelgauge" }
+        XCTAssertEqual(group?.processes.count, 40)
+        XCTAssertEqual(group?.cpu, 80)
+        XCTAssertEqual(group?.subtitle, "Background task · 40 copies running · ownership unknown")
+        XCTAssertEqual(group?.needsAttention, true)
+        XCTAssertEqual(groups.first { $0.name == "mystery" }?.needsAttention, false)
+    }
+
     func testHighMemoryUseAloneDoesNotRaiseAlarm() {
         let health = Health(samples: [SystemSample(memory: 99, physical: 100, swap: 50, pressure: .normal)], ready: true)
         XCTAssertEqual(health.level, 0)
@@ -44,6 +57,23 @@ final class MonitorTests: XCTestCase {
         interrupted[4].cpu = 10
         XCTAssertEqual(Health(samples: interrupted, ready: true).level, 0)
         XCTAssertEqual(Health(samples: sustained, ready: false).level, 0)
+    }
+
+    func testCPUAlertSurvivesDelayedReadings() {
+        let now = Date()
+        let starved = [0.0, 11, 20].map { SystemSample(date: now.addingTimeInterval($0), cpu: 100, pressure: .normal) }
+        XCTAssertEqual(Health(samples: starved, ready: true).level, 1)
+        let afterGap = [0.0, 60, 65].map { SystemSample(date: now.addingTimeInterval($0), cpu: 100, pressure: .normal) }
+        XCTAssertEqual(Health(samples: afterGap, ready: true).level, 0)
+    }
+
+    func testMaxedCPUNeverLooksCalm() {
+        let busy = Health(samples: [SystemSample(cpu: 100, pressure: .normal)], ready: true)
+        XCTAssertEqual(busy.level, 0)
+        XCTAssertFalse(busy.isCalm)
+        XCTAssertEqual(busy.title, "Busy right now")
+        XCTAssertTrue(Health(samples: [SystemSample(cpu: 20, pressure: .normal)], ready: true).isCalm)
+        XCTAssertFalse(Health(samples: [SystemSample(cpu: 20, pressure: .warning)], ready: true).isCalm)
     }
 
     func testNativeSamplerReturnsCurrentProcessAndSystemMemory() throws {

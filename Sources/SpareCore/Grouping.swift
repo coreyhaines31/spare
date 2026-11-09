@@ -26,7 +26,9 @@ public enum WorkloadGrouper {
                                     kind: .system, processes: [], canStop: false)
             } else {
                 let name = process.name.isEmpty ? "Unidentified task" : process.name
-                workload = Workload(id: "process:\(process.identity.pid):\(process.identity.started)", name: name,
+                // Copies of one program share a row, so a runaway swarm of them adds up to something visible.
+                let id = process.path.isEmpty ? "\(process.identity.pid):\(process.identity.started)" : process.path
+                workload = Workload(id: "process:\(id)", name: name,
                                     subtitle: "Background task · ownership unknown",
                                     explanation: "Spare can measure this task, but hasn't identified the app or project responsible. Its executable path is shown below.",
                                     consequence: "Inspect this task in Activity Monitor before making changes.", kind: .background,
@@ -43,6 +45,9 @@ public enum WorkloadGrouper {
                 if !group.ports.isEmpty {
                     group.subtitle += " · port " + group.ports.prefix(3).map(String.init).joined(separator: ", ")
                 }
+            }
+            if group.kind == .background, group.processes.count > 1 {
+                group.subtitle = "Background task · \(group.processes.count) copies running · ownership unknown"
             }
             return group
         }.sorted { $0.memory > $1.memory }

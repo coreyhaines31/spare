@@ -82,6 +82,12 @@ public struct Workload: Identifiable, Codable {
     public var memory: UInt64 { processes.reduce(0) { $0 + $1.memory } }
     public var cpu: Double { processes.reduce(0) { $0 + $1.cpu } }
     public var ports: [UInt16] { Array(Set(processes.flatMap(\.ports))).sorted() }
+    /// An unidentified task too heavy to keep hidden: many copies of one program, or a real share of the CPU.
+    /// A loop that keeps starting short-lived processes looks like this.
+    public var needsAttention: Bool {
+        kind == .background && (processes.count >= Self.swarmSize || cpu >= 20)
+    }
+    public static let swarmSize = 20
 }
 
 public enum MemoryPressure: String, Codable {

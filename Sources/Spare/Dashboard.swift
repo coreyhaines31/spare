@@ -13,12 +13,17 @@ struct Dashboard: View {
     @State private var filter = WorkloadFilter.all
     private var visible: [Workload] {
         monitor.workloads.filter {
-            (includeBackground || $0.kind != .background) && filter.includes($0) && $0.matches(query)
+            (includeBackground || $0.kind != .background || $0.needsAttention) && filter.includes($0) && $0.matches(query)
         }.sorted {
             let left = sortCPU ? $0.cpu : Double($0.memory)
             let right = sortCPU ? $1.cpu : Double($1.memory)
             return left == right ? $0.id < $1.id : left > right
         }
+    }
+    /// The largest pile of copies of one unidentified program, if any is big enough to look like a runaway.
+    private var swarm: Workload? {
+        monitor.workloads.filter { $0.needsAttention && $0.processes.count >= Workload.swarmSize }
+            .max { $0.processes.count < $1.processes.count }
     }
     private var growing: Workload? {
         monitor.workloads.filter { monitor.memoryTrends[$0.id]?.isGrowing == true }.max {
@@ -113,11 +118,35 @@ struct Dashboard: View {
                 .help("Settings").accessibilityLabel("Settings")
         }.padding(.horizontal, 16).padding(.vertical, 12)
     }
+    /// Sustained CPU load with healthy memory: the list is most useful sorted by CPU.
+    private var cpuIsTheConcern: Bool {
+        monitor.health.level > 0 && monitor.samples.last?.pressure == .normal
+    }
+    /// One scroll for the whole overview, so cards above the list can never squeeze it out of reach. The
+    /// search and filters stay pinned while the list scrolls under them.
     private var overview: some View {
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                overviewCards
+                Divider()
+                Section {
+                    workloadList.padding(.horizontal, 8).padding(.bottom, 8)
+                } header: {
+                    listControls.background(Color(nsColor: .windowBackgroundColor))
+                }
+            }
+        }.onAppear { if cpuIsTheConcern { sortCPU = true } }
+            .onChange(of: cpuIsTheConcern) { if $0 { sortCPU = true } }
+    }
+    private var overviewCards: some View {
         VStack(spacing: 0) {
-            ResourceSummary(monitor: monitor)
+            ResourceSummary(monitor: monitor, sortCPU: $sortCPU)
             if let recap = monitor.awayRecap {
                 AwayRecapView(recap: recap, monitor: monitor).padding(.horizontal, 16).padding(.bottom, 12)
+            }
+            if let swarm {
+                suggestionRow(swarm, subtitle: "\(swarm.processes.count) copies running · \(DisplayFormat.percent(swarm.cpu)) CPU · Something may be stuck in a loop",
+                              symbol: "exclamationmark.triangle")
             }
             if let suggestion = ReviewSuggestion.make(workloads: monitor.workloads, samples: monitor.samples, ready: monitor.ready) {
                 suggestionRow(suggestion.workload, subtitle: suggestionSubtitle(suggestion.workload), symbol: "exclamationmark.circle")
@@ -126,36 +155,37 @@ struct Dashboard: View {
             }
             if !monitor.strays.isEmpty { StraysSection(monitor: monitor) }
             if !monitor.idleApps.isEmpty { IdleAppsSection(monitor: monitor) }
-            Divider()
-            VStack(spacing: 10) {
-                NativeSearchField(text: $query).frame(height: 24)
-                Picker("Show", selection: $filter) {
-                    ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented).labelsHidden()
-                HStack {
-                    Text("Using the most").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
-                    Spacer()
-                    Picker("Sort by", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
-                        .pickerStyle(.menu).labelsHidden().frame(width: 105).controlSize(.small)
+        }
+    }
+    private var listControls: some View {
+        VStack(spacing: 10) {
+            NativeSearchField(text: $query).frame(height: 24)
+            Picker("Show", selection: $filter) {
+                ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }.pickerStyle(.segmented).labelsHidden()
+            HStack {
+                Text("Using the most").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                Spacer()
+                Picker("Sort by", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
+                    .pickerStyle(.segmented).labelsHidden().fixedSize().controlSize(.small)
+            }
+        }.padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 6)
+    }
+    private var workloadList: some View {
+        VStack(spacing: 0) {
+            ForEach(visible) { workload in
+                WorkloadRow(workload: workload, sortCPU: sortCPU,
+                            note: monitor.idleApps.first { $0.workload.id == workload.id }.map { IdleApps.describe($0.idle) }
+                                ?? workload.activity(in: monitor.agentActivity)?.label,
+                            growth: monitor.memoryTrends[workload.id].flatMap { $0.isGrowing ? $0.summary : nil }) {
+                    path.append(workload)
                 }
-            }.padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 4)
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(visible) { workload in
-                        WorkloadRow(workload: workload, sortCPU: sortCPU,
-                                    note: monitor.idleApps.first { $0.workload.id == workload.id }.map { IdleApps.describe($0.idle) }
-                                        ?? workload.activity(in: monitor.agentActivity)?.label,
-                                    growth: monitor.memoryTrends[workload.id].flatMap { $0.isGrowing ? $0.summary : nil }) {
-                            path.append(workload)
-                        }
-                    }
-                    if visible.isEmpty {
-                        VStack(spacing: 8) {
-                            Text(monitor.ready ? "No matching items" : "Finding your apps…").font(.headline)
-                            if monitor.ready { Text("Try a different search or category.").foregroundStyle(.secondary) }
-                        }.frame(maxWidth: .infinity).padding(.vertical, 32)
-                    }
-                }.padding(.horizontal, 8).padding(.bottom, 8)
+            }
+            if visible.isEmpty {
+                VStack(spacing: 8) {
+                    Text(monitor.ready ? "No matching items" : "Finding your apps…").font(.headline)
+                    if monitor.ready { Text("Try a different search or category.").foregroundStyle(.secondary) }
+                }.frame(maxWidth: .infinity).padding(.vertical, 32)
             }
         }
     }
