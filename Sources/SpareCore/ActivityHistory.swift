@@ -58,7 +58,7 @@ public final class ActivityHistory {
             return
         }
         let memoryConcern = next == "warning" || next == "critical"
-        let items = workloads.filter { $0.kind != .background }.sorted {
+        let items = workloads.filter { $0.kind != .background || $0.needsAttention }.sorted {
             memoryConcern ? $0.memory > $1.memory : $0.cpu > $1.cpu
         }.prefix(3).map { ActivityItem(id: $0.id, name: $0.name, memory: $0.memory, cpu: $0.cpu) }
         events.insert(ActivityEvent(date: sample.date, title: health.title,

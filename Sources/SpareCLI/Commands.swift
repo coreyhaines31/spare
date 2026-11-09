@@ -18,7 +18,7 @@ enum Commands {
 
     static func list(_ options: Options) {
         let reading = Reading.take()
-        let visible = reading.workloads.filter { $0.kind != .background && options.filter.includes($0) }.sorted {
+        let visible = reading.workloads.filter { ($0.kind != .background || $0.needsAttention) && options.filter.includes($0) }.sorted {
             options.sortCPU ? ($0.cpu, $0.memory) > ($1.cpu, $1.memory) : $0.memory > $1.memory
         }
         let shown = options.limit > 0 ? Array(visible.prefix(options.limit)) : visible

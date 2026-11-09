@@ -29,6 +29,19 @@ final class MonitorTests: XCTestCase {
         XCTAssertEqual(groups.first(where: { $0.kind == .background })?.canStop, false)
     }
 
+    func testCopiesOfAnUnidentifiedProgramShareARow() {
+        let swarm = (0..<40).map {
+            ProcessRecord(pid: Int32(100 + $0), started: UInt64($0), name: "fuelgauge", path: "/opt/homebrew/bin/fuelgauge", cpu: 2)
+        }
+        let groups = WorkloadGrouper.group(swarm + [ProcessRecord(pid: 9, name: "mystery", path: "/usr/local/bin/mystery")], apps: [])
+        let group = groups.first { $0.name == "fuelgauge" }
+        XCTAssertEqual(group?.processes.count, 40)
+        XCTAssertEqual(group?.cpu, 80)
+        XCTAssertEqual(group?.subtitle, "Background task · 40 copies running · ownership unknown")
+        XCTAssertEqual(group?.needsAttention, true)
+        XCTAssertEqual(groups.first { $0.name == "mystery" }?.needsAttention, false)
+    }
+
     func testHighMemoryUseAloneDoesNotRaiseAlarm() {
         let health = Health(samples: [SystemSample(memory: 99, physical: 100, swap: 50, pressure: .normal)], ready: true)
         XCTAssertEqual(health.level, 0)
