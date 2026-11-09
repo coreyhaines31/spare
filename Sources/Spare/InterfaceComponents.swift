@@ -115,9 +115,17 @@ struct ResourceSummary: View {
             Text(monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…").fontWeight(.semibold)
             UsageBar(fraction: monitor.ready ? sample.cpu / 100 : 0, color: busy ? .orange : .accentColor)
                 .accessibilityHidden(true)
-            Text(monitor.ready ? "\(100 - Int(min(max(sample.cpu, 0), 100).rounded()))% available" : " ")
-                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Text(monitor.ready ? cpuCaption(sample) : " ")
+                .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
         }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Names whatever is using the most CPU, so the answer to "what's busy?" is in the header.
+    private func cpuCaption(_ sample: SystemSample) -> String {
+        if let top = monitor.workloads.max(by: { $0.cpu < $1.cpu }), top.cpu >= 5 {
+            return "Most: \(top.name) \(DisplayFormat.percent(top.cpu))"
+        }
+        return "\(100 - Int(min(max(sample.cpu, 0), 100).rounded()))% available"
     }
 
     private func pressureReading(_ sample: SystemSample) -> some View {
