@@ -46,6 +46,23 @@ final class MonitorTests: XCTestCase {
         XCTAssertEqual(Health(samples: sustained, ready: false).level, 0)
     }
 
+    func testCPUAlertSurvivesDelayedReadings() {
+        let now = Date()
+        let starved = [0.0, 11, 20].map { SystemSample(date: now.addingTimeInterval($0), cpu: 100, pressure: .normal) }
+        XCTAssertEqual(Health(samples: starved, ready: true).level, 1)
+        let afterGap = [0.0, 60, 65].map { SystemSample(date: now.addingTimeInterval($0), cpu: 100, pressure: .normal) }
+        XCTAssertEqual(Health(samples: afterGap, ready: true).level, 0)
+    }
+
+    func testMaxedCPUNeverLooksCalm() {
+        let busy = Health(samples: [SystemSample(cpu: 100, pressure: .normal)], ready: true)
+        XCTAssertEqual(busy.level, 0)
+        XCTAssertFalse(busy.isCalm)
+        XCTAssertEqual(busy.title, "Busy right now")
+        XCTAssertTrue(Health(samples: [SystemSample(cpu: 20, pressure: .normal)], ready: true).isCalm)
+        XCTAssertFalse(Health(samples: [SystemSample(cpu: 20, pressure: .warning)], ready: true).isCalm)
+    }
+
     func testNativeSamplerReturnsCurrentProcessAndSystemMemory() throws {
         let snapshot = try XCTUnwrap(Sampler().sample())
         XCTAssertGreaterThan(snapshot.system.physical, 0)

@@ -75,9 +75,7 @@ struct ResourceSummary: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 9) {
-                Image(systemName: monitor.error != nil ? "questionmark.circle" : monitor.health.level == 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .foregroundStyle(monitor.error != nil || !monitor.ready ? Color.secondary : [Color.green, .orange, .red][min(monitor.health.level, 2)])
-                    .font(.title3)
+                Image(systemName: headlineSymbol).foregroundStyle(headlineColor).font(.title3)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(monitor.error != nil ? "Readings unavailable" : monitor.health.title).font(.headline)
                     Text(monitor.error ?? monitor.health.message).font(.callout).foregroundStyle(.secondary)
@@ -92,6 +90,18 @@ struct ResourceSummary: View {
                 }
             }
         }.padding(16)
+    }
+
+    /// The green check is only for a calm Mac. A maxed CPU that isn't a warning yet gets a neutral gauge.
+    private var headlineSymbol: String {
+        if monitor.error != nil { return "questionmark.circle" }
+        if monitor.health.level > 0 { return "exclamationmark.circle.fill" }
+        return monitor.health.isCalm ? "checkmark.circle.fill" : "gauge.with.needle.fill"
+    }
+    private var headlineColor: Color {
+        if monitor.error != nil || !monitor.ready { return .secondary }
+        if monitor.health.level > 0 { return monitor.health.level == 1 ? .orange : .red }
+        return monitor.health.isCalm ? .green : .orange
     }
 
     private func cpuReading(_ sample: SystemSample) -> some View {
