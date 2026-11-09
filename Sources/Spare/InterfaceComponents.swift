@@ -105,7 +105,7 @@ struct ResourceSummary: View {
     private var headlineColor: Color {
         if monitor.error != nil || !monitor.ready { return .secondary }
         if monitor.health.level > 0 { return monitor.health.level == 1 ? .orange : .red }
-        return monitor.health.isCalm ? .green : .orange
+        return monitor.health.isCalm ? .green : .secondary
     }
 
     private func cpuReading(_ sample: SystemSample) -> some View {
