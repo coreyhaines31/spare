@@ -92,7 +92,7 @@ func openSpare() {
         done.signal()
     }
     done.wait()
-    print("Opened Spare. Look for the gauge icon in the menu bar.")
+    print("Opened Spare. Look for the knob icon in the menu bar.")
 }
 
 let options = Options(Array(CommandLine.arguments.dropFirst()))

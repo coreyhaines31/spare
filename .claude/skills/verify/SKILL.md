@@ -12,7 +12,8 @@ Everything goes through one helper. Run it from anywhere in the repo:
 ```sh
 V=.claude/skills/verify/scripts/spare-verify
 $V build            # make app -> dist/Spare.app (release build, ad-hoc signed)
-$V launch           # park the installed Spare, start the dev build, wait until ready
+$V launch [args]    # park the installed Spare, start the dev build, wait until ready
+$V relaunch [args]  # restart the dev build in place, after a rebuild or to change its arguments
 $V doctor           # read-only health check; run first and after anything surprising
 $V cli <args...>    # run the dev build's `spare`, recording evidence
 $V fixture-server <name>   # throwaway python http.server Spare lists as a project; prints its port
@@ -28,7 +29,9 @@ Only one Spare can run at a time. Every copy shares the bundle id `com.spareform
 3. quits the installed copy (Apple Event, then SIGTERM by PID, never by name),
 4. starts `dist/Spare.app` with `open -n -g`.
 
-`teardown` reverses all of it. Never leave a run without teardown: until then the person's own Spare is not running. If a run dies midway, run `teardown`; it works from whatever state exists.
+`teardown` reverses all of it, stops every dev build from this checkout (not only the one `launch` recorded), and ends with `no dev Spare left running` or a `FAILED` line and exit 1.
+
+**Never start the dev build by hand** (`open dist/Spare.app`, `open --args`, or running the executable). A copy the script didn't start is how two dev builds were once left running for over an hour. To pass app arguments such as `--window`, use `$V launch --window`; to restart after a rebuild, use `$V relaunch --window`. Never leave a run without teardown: until then the person's own Spare is not running. If a run dies midway, run `teardown`; it works from whatever state exists.
 
 ## Launch
 
@@ -76,7 +79,7 @@ Each `$V cli` call writes `NN.cmd`, `NN.stdout`, `NN.stderr`, `NN.exit` into `ar
 $V teardown
 ```
 
-It kills fixture servers and the dev Spare by the PIDs it recorded, re-imports the saved defaults, restores `recaps.json`, relaunches every parked app, and removes `.build/verify-state/`. It never touches `artifacts/verify/`. Afterwards, confirm the person's Spare is back: `pgrep -lf 'Spare.app/Contents/MacOS/Spare$'` shows `~/Applications/Spare.app` (or `/Applications/Spare.app`).
+It kills fixture servers and the dev Spare by the PIDs it recorded, re-imports the saved defaults, restores `recaps.json`, relaunches every parked app, and removes `.build/verify-state/`. It never touches `artifacts/verify/`. Teardown must print `no dev Spare left running` and exit 0. Then confirm exactly one Spare is running and it is the person's own: `ps -Ao pid,args | grep '[S]pare.app/Contents/MacOS/Spare'` shows a single line for `~/Applications/Spare.app` (or `/Applications/Spare.app`). Don't anchor the match to the end of the line: a copy started with arguments would be missed.
 
 ## Feature map
 
