@@ -30,12 +30,12 @@ struct AwayRecapView: View {
                 }.padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 10)
             }
         }
-        .overlay(alignment: .topTrailing) {
+        .trailingAccessory {
             HStack(spacing: 8) {
                 ContextHelp(title: "While you were away", text: "Starts after five minutes without keyboard or mouse input and ends when input resumes. The first five minutes are excluded. This describes observed resource use, not completed or productive work. Sleep and missing samples are unobserved. This summary stays in memory for up to 18 hours or until you dismiss it or quit Spare.")
                 Button { monitor.dismissAwayRecap() } label: { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
                     .buttonStyle(.plain).foregroundStyle(theme.sub).accessibilityLabel("Dismiss away recap")
-            }.padding(.top, 10).padding(.trailing, 14)
+            }.padding(.top, 3)
         }
         .overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
     }
