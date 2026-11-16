@@ -71,7 +71,7 @@ struct Dashboard: View {
             if detail {
                 Fascia(nameplate: path.isEmpty ? "Recent Activity" : "Details") {
                     Button(action: goBack) { Label("Back", systemImage: "chevron.left") }
-                        .buttonStyle(.key).help("Back").keyboardShortcut("[", modifiers: .command)
+                        .buttonStyle(.panelCompact).help("Back").keyboardShortcut("[", modifiers: .command)
                 }
             } else {
                 Fascia(nameplate: "Load", detail: "×10 percent CPU", label: "This Mac") { loadMeter }

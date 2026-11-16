@@ -19,52 +19,6 @@ struct FasciaKey: View {
     }
 }
 
-/// Popover buttons: a compact metal key, or a red key for the action that stops or quits something.
-struct SpareButtonStyle: ButtonStyle {
-    enum Kind { case secondary, destructive }
-    var kind = Kind.secondary
-    var compact = true
-
-    func makeBody(configuration: Configuration) -> some View {
-        Styled(configuration: configuration, kind: kind, compact: compact)
-    }
-
-    private struct Styled: View {
-        let configuration: Configuration
-        let kind: Kind
-        let compact: Bool
-        @Environment(\.panelTheme) private var theme
-        @Environment(\.isEnabled) private var isEnabled
-        var body: some View {
-            let shape = RoundedRectangle(cornerRadius: compact ? 4 : 5)
-            configuration.label
-                .font(PanelFont.body(compact ? 11.5 : 12.5, .semibold))
-                .lineLimit(1)
-                .foregroundStyle(kind == .destructive ? Color.white : theme.ink)
-                .padding(.vertical, compact ? 4 : 7)
-                .padding(.horizontal, compact ? 9 : 12)
-                .background {
-                    switch kind {
-                    case .secondary:
-                        shape.fill(LinearGradient(colors: theme.button2, startPoint: .top, endPoint: .bottom))
-                            .overlay(shape.strokeBorder(theme.button2Edge, lineWidth: 1))
-                    case .destructive:
-                        shape.fill(theme.stop).overlay(shape.strokeBorder(.black.opacity(0.2), lineWidth: 1))
-                    }
-                }
-                .shadow(color: .black.opacity(0.08), radius: 0, y: 1)
-                .opacity(configuration.isPressed ? 0.8 : (isEnabled ? 1 : 0.5))
-                .contentShape(Rectangle())
-        }
-    }
-}
-
-extension ButtonStyle where Self == SpareButtonStyle {
-    static var key: SpareButtonStyle { SpareButtonStyle() }
-    static var wideKey: SpareButtonStyle { SpareButtonStyle(compact: false) }
-    static var stopKey: SpareButtonStyle { SpareButtonStyle(kind: .destructive) }
-}
-
 /// A recessed box: the reading tiles, confirm boxes and notices.
 struct Recess<Content: View>: View {
     var tint: PanelStatus?
@@ -100,9 +54,9 @@ struct ConfirmBox: View {
                         .foregroundStyle(theme.caution).fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
-                    Button("Cancel", action: cancel).buttonStyle(.key).keyboardShortcut(.cancelAction)
+                    Button("Cancel", action: cancel).buttonStyle(.panelCompact).keyboardShortcut(.cancelAction)
                     Spacer()
-                    Button(action, role: .destructive, action: confirm).buttonStyle(.stopKey).disabled(disabled)
+                    Button(action, role: .destructive, action: confirm).buttonStyle(.panelDestructive).disabled(disabled)
                 }
             }
         }

@@ -114,10 +114,10 @@ struct WorkloadDetail: View {
             HStack(spacing: 8) {
                 if review == nil && workload.canStop && latest != nil {
                     Button(workload.appIdentity != nil ? "Review quit…" : workload.sessions.count > 1 ? "Review all sessions…" : "Review stop…") { review = latest }
-                        .buttonStyle(.wideKey)
+                        .buttonStyle(.panelSecondary)
                 }
                 if let path = workload.appPath {
-                    Button("Open app") { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }.buttonStyle(.wideKey)
+                    Button("Open app") { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }.buttonStyle(.panelSecondary)
                 }
             }
         }
@@ -129,7 +129,7 @@ struct WorkloadDetail: View {
             TextSection(heading: "Docker’s memory", text: "Docker Desktop runs your containers inside one Linux virtual machine. That VM can use up to \(DisplayFormat.memory(limit.bytes))\(limit.isDefault ? ", Docker’s default of half your Mac’s memory" : ""). Stopping containers you don’t need frees memory, and Docker’s Resource Saver shuts the VM down after a few idle minutes.")
             PanelNote("To lower the limit: Docker Desktop → Settings → Resources → Advanced.").padding(.bottom, 8)
             if let docker = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.docker.docker") {
-                Button("Open Docker Desktop") { NSWorkspace.shared.open(docker) }.buttonStyle(.wideKey)
+                Button("Open Docker Desktop") { NSWorkspace.shared.open(docker) }.buttonStyle(.panelSecondary)
                     .padding(.horizontal, 14).padding(.bottom, 10)
             }
         }

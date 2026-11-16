@@ -73,7 +73,7 @@ struct AppHelpersSection: View {
     private func chromeTools(pid: Int32) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Button { openTaskManager(pid: pid) } label: { Label("Open Chrome’s Task Manager", systemImage: "list.bullet.rectangle") }
-                .buttonStyle(.wideKey)
+                .buttonStyle(.panelSecondary)
             Text("It names the tab behind each process. Click the Memory footprint column to sort, then End process.")
                 .font(PanelFont.body(11.5)).foregroundStyle(theme.sub).fixedSize(horizontal: false, vertical: true)
             if monitor.awaitingAccessibility {
@@ -82,7 +82,7 @@ struct AppHelpersSection: View {
                         Text("Turn on Spare in Accessibility settings. Chrome’s Task Manager opens as soon as you do. Spare only uses this permission to choose that menu item.")
                             .font(PanelFont.body(11.5)).fixedSize(horizontal: false, vertical: true)
                         HStack {
-                            Button("Open Accessibility Settings") { ChromeShortcuts.openAccessibilitySettings() }.buttonStyle(.key)
+                            Button("Open Accessibility Settings") { ChromeShortcuts.openAccessibilitySettings() }.buttonStyle(.panelCompact)
                             Button("Cancel") { monitor.cancelAccessibilityWait() }.buttonStyle(.panelQuietLink)
                         }
                     }
@@ -135,7 +135,7 @@ struct AppHelpersSection: View {
                     if leftovers.count != sessions.count {
                         Button("Close all \(sessions.count) sessions…") { closingSessions = sessions }
                     }
-                }.buttonStyle(.key)
+                }.buttonStyle(.panelCompact)
             }
         }
     }
@@ -158,7 +158,7 @@ struct AppHelpersSection: View {
                     Text("\(DisplayFormat.percent(process.cpu)) CPU").font(PanelFont.body(11)).foregroundStyle(theme.sub).monospacedDigit()
                 }
                 if role.canEnd && confirming != process.identity {
-                    Button("End…") { confirming = process.identity }.buttonStyle(.key)
+                    Button("End…") { confirming = process.identity }.buttonStyle(.panelCompact)
                         .help("Review ending this \(role.label(browser: browser).lowercased()) process")
                 } else if let reason = role.lockedReason {
                     Button { explaining = explaining == process.identity ? nil : process.identity } label: {

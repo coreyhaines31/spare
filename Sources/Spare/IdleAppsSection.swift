@@ -28,13 +28,13 @@ struct IdleAppsSection: View {
                         subtitle: IdleApps.describe(app.idle).capitalizedFirst) {
                         HStack(spacing: 8) {
                             Text(DisplayFormat.memory(app.workload.memory)).font(PanelFont.body(13)).monospacedDigit()
-                            Button("Quit…") { confirming = [app.workload.id] }.buttonStyle(.key)
+                            Button("Quit…") { confirming = [app.workload.id] }.buttonStyle(.panelCompact)
                         }
                     }
                 }
                 if apps.count > 1 {
                     Button("Quit all \(apps.count)…") { confirming = Set(apps.map(\.workload.id)) }
-                        .buttonStyle(.key).padding(.horizontal, 14).padding(.vertical, 6)
+                        .buttonStyle(.panelCompact).padding(.horizontal, 14).padding(.vertical, 6)
                 }
             }.padding(.bottom, 6)
         }.overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }

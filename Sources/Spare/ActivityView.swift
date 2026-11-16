@@ -14,7 +14,7 @@ struct ActivityView: View {
                     Text("Past 15 minutes").font(PanelFont.condensed(10, .semibold)).tracking(2).textCase(.uppercase)
                         .foregroundStyle(theme.sub)
                     Spacer()
-                    Button("Clear") { monitor.clearActivity() }.buttonStyle(.key).disabled(monitor.activity.isEmpty)
+                    Button("Clear") { monitor.clearActivity() }.buttonStyle(.panelCompact).disabled(monitor.activity.isEmpty)
                 }.padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 6)
                 PanelNote("Observed changes, kept on this Mac until you quit Spare. Resource use alone doesn’t explain a slowdown.")
                     .padding(.bottom, 10)
@@ -47,7 +47,7 @@ struct ActivityView: View {
                                 }
                                 Spacer()
                                 if let current = monitor.workloads.first(where: { $0.id == item.id }) {
-                                    Button("View current") { select(current) }.buttonStyle(.key)
+                                    Button("View current") { select(current) }.buttonStyle(.panelCompact)
                                 }
                             }
                         }

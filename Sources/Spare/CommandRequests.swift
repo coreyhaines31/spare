@@ -183,9 +183,9 @@ struct CommandRequestBanner: View {
                         .foregroundStyle(theme.caution).fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
-                    Button("Don’t \(request.action)") { monitor.declineRequest() }.buttonStyle(.key).keyboardShortcut(.cancelAction)
+                    Button("Don’t \(request.action)") { monitor.declineRequest() }.buttonStyle(.panelCompact).keyboardShortcut(.cancelAction)
                     Spacer()
-                    Button(request.action, role: .destructive) { monitor.approveRequest() }.buttonStyle(.stopKey)
+                    Button(request.action, role: .destructive) { monitor.approveRequest() }.buttonStyle(.panelDestructive)
                 }
             }
         }

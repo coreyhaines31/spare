@@ -26,12 +26,12 @@ struct StraysSection: View {
                 ForEach(strays, id: \.root.identity) { stray in
                     WrapRow(name: "\(stray.name) · \(stray.kind.label)", subtitle: stray.reason, icon: SymbolTile(symbol: stray.kind.symbol)) {
                         Text(DisplayFormat.memory(stray.memory)).font(PanelFont.body(13)).monospacedDigit().fixedSize()
-                        Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.key).fixedSize()
+                        Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.panelCompact).fixedSize()
                     }.help("PID \(stray.root.identity.pid) · \(stray.tree.count) process\(stray.tree.count == 1 ? "" : "es")")
                 }
                 if strays.count > 1 {
                     Button("Stop all \(strays.count)…") { confirming = Set(strays.map(\.root.identity)) }
-                        .buttonStyle(.key).padding(.horizontal, 14).padding(.vertical, 6)
+                        .buttonStyle(.panelCompact).padding(.horizontal, 14).padding(.vertical, 6)
                 }
             }.padding(.bottom, 6)
         }.overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
