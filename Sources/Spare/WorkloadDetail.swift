@@ -53,7 +53,7 @@ struct WorkloadDetail: View {
                     TextSection(heading: "Local server ports", text: workload.ports.map(String.init).joined(separator: ", ") + " · Listening on this Mac")
                     ForEach(workload.webPorts, id: \.self) { port in
                         if let url = URL(string: "http://localhost:\(port)") {
-                            Link("Open localhost:\(port)", destination: url).buttonStyle(.panelLink)
+                            Link(String("Open localhost:\(port)"), destination: url).buttonStyle(.panelLink)
                                 .padding(.horizontal, 14).padding(.bottom, 8)
                         }
                     }
