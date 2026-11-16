@@ -217,7 +217,7 @@ struct Dashboard: View {
     }
     private func suggestionRow(_ workload: Workload, subtitle: String, symbol: String) -> some View {
         Button { path.append(workload) } label: {
-            OpenRow(name: workload.name, subtitle: subtitle, icon: SymbolTile(symbol: symbol))
+            Row(workload.name, icon: SymbolTile(symbol), subtitle: subtitle, options: .chevron).subtitleLineLimit(2)
         }.buttonStyle(.plain).help("Review current readings for \(workload.name)")
             .overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
     }

@@ -19,21 +19,6 @@ struct FasciaKey: View {
     }
 }
 
-/// A 22-point metal tile with a symbol, for rows whose item has no app icon.
-struct SymbolTile: View {
-    let symbol: String
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(theme.ink)
-            .frame(width: 22, height: 22)
-            .background(RoundedRectangle(cornerRadius: 5).fill(LinearGradient(colors: theme.button2, startPoint: .top, endPoint: .bottom)))
-            .overlay(RoundedRectangle(cornerRadius: 5).strokeBorder(theme.button2Edge, lineWidth: 1))
-            .accessibilityHidden(true)
-    }
-}
-
 /// A heading and a paragraph in the detail view.
 struct TextSection: View {
     let heading: String
@@ -63,40 +48,5 @@ struct PanelNote: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)
-    }
-}
-
-/// A row whose subtitle can take two lines, unlike PanelKit's one-line `Row`: icon, name, subtitle, then trailing content.
-struct WrapRow<Icon: View, Trailing: View>: View {
-    let name: String
-    let subtitle: String
-    let icon: Icon
-    @ViewBuilder let trailing: Trailing
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        HStack(spacing: 10) {
-            icon.frame(width: 22, height: 22)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name).font(PanelFont.body(13, .semibold)).lineLimit(1)
-                Text(subtitle).font(PanelFont.body(11.5)).foregroundStyle(theme.sub).lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-            trailing
-        }
-        .padding(.vertical, 7).padding(.horizontal, 14)
-        .contentShape(Rectangle())
-    }
-}
-
-/// A row that opens something, with a chevron.
-struct OpenRow<Icon: View>: View {
-    let name: String
-    let subtitle: String
-    let icon: Icon
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        WrapRow(name: name, subtitle: subtitle, icon: icon) {
-            Text("›").font(PanelFont.body(15)).foregroundStyle(theme.sub).accessibilityHidden(true)
-        }.accessibilityElement(children: .combine)
     }
 }

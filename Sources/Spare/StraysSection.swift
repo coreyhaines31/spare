@@ -24,10 +24,11 @@ struct StraysSection: View {
                     }).padding(.horizontal, 14).padding(.vertical, 4)
                 }
                 ForEach(strays, id: \.root.identity) { stray in
-                    WrapRow(name: "\(stray.name) · \(stray.kind.label)", subtitle: stray.reason, icon: SymbolTile(symbol: stray.kind.symbol)) {
-                        Text(DisplayFormat.memory(stray.memory)).font(PanelFont.body(13)).monospacedDigit().fixedSize()
-                        Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.panelCompact).fixedSize()
-                    }.help("PID \(stray.root.identity.pid) · \(stray.tree.count) process\(stray.tree.count == 1 ? "" : "es")")
+                    Row("\(stray.name) · \(stray.kind.label)", icon: SymbolTile(stray.kind.symbol), subtitle: stray.reason,
+                        value: DisplayFormat.memory(stray.memory))
+                        .subtitleLineLimit(2)
+                        .trailingAccessory { Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.panelCompact) }
+                        .help("PID \(stray.root.identity.pid) · \(stray.tree.count) process\(stray.tree.count == 1 ? "" : "es")")
                 }
                 if strays.count > 1 {
                     Button("Stop all \(strays.count)…") { confirming = Set(strays.map(\.root.identity)) }
