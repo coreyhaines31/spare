@@ -216,16 +216,9 @@ struct Dashboard: View {
     }
     private func suggestionRow(_ workload: Workload, subtitle: String, symbol: String) -> some View {
         Button { path.append(workload) } label: {
-            HStack(spacing: 10) {
-                Image(systemName: symbol).foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
-                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
-            }.contentShape(Rectangle()).padding(.horizontal, 16).padding(.bottom, 12)
+            OpenRow(name: workload.name, subtitle: subtitle, icon: SymbolTile(symbol: symbol))
         }.buttonStyle(.plain).help("Review current readings for \(workload.name)")
+            .overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
     }
     private func suggestionSubtitle(_ workload: Workload) -> String {
         let pressure = monitor.samples.last?.pressure
@@ -251,10 +244,12 @@ struct Sparkline: Shape {
 
 struct WorkloadIcon: View {
     let workload: Workload
+    var size: CGFloat = 32
+    @Environment(\.brushed) private var theme
     var body: some View {
         Group {
             if let path = workload.appPath { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable() }
-            else { Image(systemName: workload.kind.symbol).resizable().scaledToFit().padding(7).foregroundStyle(.secondary) }
-        }.frame(width: 32, height: 32)
+            else { Image(systemName: workload.kind.symbol).resizable().scaledToFit().padding(size * 0.22).foregroundStyle(theme.sub) }
+        }.frame(width: size, height: size)
     }
 }
