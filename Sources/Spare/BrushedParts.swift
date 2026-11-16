@@ -3,22 +3,6 @@ import SwiftUI
 
 // Small pieces of the Brushed popover that PanelKit doesn't have yet, drawn with PanelKit's tokens.
 
-/// A 22-point metal key with a symbol, for the toolbar buttons that sit in the fascia.
-struct FasciaKey: View {
-    let symbol: String
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(theme.ink)
-            .frame(width: 24, height: 22)
-            .background(RoundedRectangle(cornerRadius: 4).fill(LinearGradient(colors: theme.button2, startPoint: .top, endPoint: .bottom)))
-            .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(theme.button2Edge, lineWidth: 1))
-            .shadow(color: .black.opacity(0.12), radius: 0, y: 1)
-            .contentShape(Rectangle())
-    }
-}
-
 /// A heading and a paragraph in the detail view.
 struct TextSection: View {
     let heading: String

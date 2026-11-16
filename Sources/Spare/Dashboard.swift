@@ -63,20 +63,18 @@ struct Dashboard: View {
             .background(theme.background)
             .panelAccent(PanelAccent.spare)
     }
-    /// The metal fascia: nameplate and toolbar keys, then the load meter on the overview or a Back key elsewhere.
+    /// The metal fascia: nameplate and toolbar keys, with the load meter on the overview and a Back key elsewhere.
     /// On the overview it scrolls with the cards, so the list has the full height once you scroll.
     @ViewBuilder private var fascia: some View {
         let detail = !path.isEmpty || showingActivity
-        Group {
-            if detail {
-                Fascia(nameplate: path.isEmpty ? "Recent Activity" : "Details") {
-                    Button(action: goBack) { Label("Back", systemImage: "chevron.left") }
-                        .buttonStyle(.panelCompact).help("Back").keyboardShortcut("[", modifiers: .command)
-                }
-            } else {
-                Fascia(nameplate: "Load", detail: "×10 percent CPU", label: "This Mac") { loadMeter }
-            }
-        }.overlay(alignment: .topTrailing) { toolbarKeys.padding(.top, 9).padding(.trailing, 14) }
+        if detail {
+            Fascia(nameplate: path.isEmpty ? "Recent Activity" : "Details")
+                .leadingAccessory { KeyCap("chevron.left", accessibilityLabel: "Back", action: goBack).keyboardShortcut("[", modifiers: .command) }
+                .trailingAccessory { toolbarKeys }
+        } else {
+            Fascia(nameplate: "Load", detail: "×10 percent CPU", label: "This Mac") { loadMeter }
+                .trailingAccessory { toolbarKeys }
+        }
     }
     /// CPU in use on a 0–10 scale (tens of percent), red past 8.
     private var loadMeter: some View {
@@ -88,14 +86,12 @@ struct Dashboard: View {
                      accessibilityValue: cpu.map { "\(DisplayFormat.percent($0)) CPU" } ?? "Measuring")
     }
     private var toolbarKeys: some View {
-        HStack(spacing: 5) {
-            Button { monitor.onOpenRecap?() } label: { FasciaKey(symbol: "chart.bar.xaxis") }
-                .buttonStyle(.plain).help("Daily and weekly recap").accessibilityLabel("Daily and weekly recap")
-            Button {
+        Group {
+            KeyCap("chart.bar.xaxis", accessibilityLabel: "Daily and weekly recap") { monitor.onOpenRecap?() }
+            KeyCap("clock.arrow.circlepath", accessibilityLabel: "Recent activity") {
                 path.removeAll()
                 showingActivity.toggle()
-            } label: { FasciaKey(symbol: "clock.arrow.circlepath") }
-                .buttonStyle(.plain).help("Recent activity").accessibilityLabel("Recent activity")
+            }
             Menu {
                 Button("Open in a window") { monitor.onOpenWindow?() }
                 Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
@@ -121,8 +117,8 @@ struct Dashboard: View {
                 Button("Check for Updates…") { monitor.onCheckForUpdates?() }
                 Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                 Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
-            } label: { FasciaKey(symbol: "gearshape") }
-                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+            } label: { Image(systemName: "gearshape") }
+                .menuStyle(.button).buttonStyle(KeyCapStyle()).menuIndicator(.hidden).fixedSize()
                 .help("Settings").accessibilityLabel("Settings")
         }
     }
