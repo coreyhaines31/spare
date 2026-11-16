@@ -24,11 +24,9 @@ struct StraysSection: View {
                     }).padding(.horizontal, 14).padding(.vertical, 4)
                 }
                 ForEach(strays, id: \.root.identity) { stray in
-                    Row("\(stray.name) · \(stray.kind.label)", icon: SymbolTile(symbol: stray.kind.symbol), subtitle: stray.reason) {
-                        HStack(spacing: 8) {
-                            Text(DisplayFormat.memory(stray.memory)).font(PanelFont.body(13)).monospacedDigit()
-                            Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.key)
-                        }
+                    WrapRow(name: "\(stray.name) · \(stray.kind.label)", subtitle: stray.reason, icon: SymbolTile(symbol: stray.kind.symbol)) {
+                        Text(DisplayFormat.memory(stray.memory)).font(PanelFont.body(13)).monospacedDigit().fixedSize()
+                        Button("Stop…") { confirming = [stray.root.identity] }.buttonStyle(.key).fixedSize()
                     }.help("PID \(stray.root.identity.pid) · \(stray.tree.count) process\(stray.tree.count == 1 ? "" : "es")")
                 }
                 if strays.count > 1 {

@@ -199,11 +199,12 @@ struct PanelNote: View {
     }
 }
 
-/// A row that opens something and keeps its whole subtitle (up to two lines), unlike PanelKit's one-line `Row`.
-struct OpenRow<Icon: View>: View {
+/// A row whose subtitle can take two lines, unlike PanelKit's one-line `Row`: icon, name, subtitle, then trailing content.
+struct WrapRow<Icon: View, Trailing: View>: View {
     let name: String
     let subtitle: String
     let icon: Icon
+    @ViewBuilder let trailing: Trailing
     @Environment(\.brushed) private var theme
     var body: some View {
         HStack(spacing: 10) {
@@ -213,10 +214,22 @@ struct OpenRow<Icon: View>: View {
                 Text(subtitle).font(PanelFont.body(11.5)).foregroundStyle(theme.sub).lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }.frame(maxWidth: .infinity, alignment: .leading)
-            Text("›").font(PanelFont.body(15)).foregroundStyle(theme.sub).accessibilityHidden(true)
+            trailing
         }
         .padding(.vertical, 7).padding(.horizontal, 14)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A row that opens something, with a chevron.
+struct OpenRow<Icon: View>: View {
+    let name: String
+    let subtitle: String
+    let icon: Icon
+    @Environment(\.brushed) private var theme
+    var body: some View {
+        WrapRow(name: name, subtitle: subtitle, icon: icon) {
+            Text("›").font(PanelFont.body(15)).foregroundStyle(theme.sub).accessibilityHidden(true)
+        }.accessibilityElement(children: .combine)
     }
 }
