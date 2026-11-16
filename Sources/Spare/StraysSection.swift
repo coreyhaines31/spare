@@ -18,7 +18,7 @@ struct StraysSection: View {
             VStack(alignment: .leading, spacing: 0) {
                 if let confirming {
                     ConfirmBox(message: "Spare will stop \(confirming.count == 1 ? "this" : "these \(confirming.count)") and everything \(confirming.count == 1 ? "it" : "they") started. Anything still running a few seconds later is force-stopped.",
-                               action: "Stop", cancel: { self.confirming = nil }, confirm: {
+                               actionTitle: "Stop", cancel: { self.confirming = nil }, confirm: {
                         monitor.stopStrays(strays.filter { confirming.contains($0.root.identity) })
                         self.confirming = nil
                     }).padding(.horizontal, 14).padding(.vertical, 4)

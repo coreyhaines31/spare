@@ -102,7 +102,7 @@ struct WorkloadDetail: View {
                            message: workload.appIdentity != nil ? "Spare will ask this app to quit normally. Save any work first." :
                             "Spare will ask these \(workload.processes.count) processes to stop. Running agent tasks or unsaved in-memory work may be interrupted. Nothing is force-killed.",
                            warning: liveActivity?.stopWarning(agent: workload.name),
-                           action: workload.appIdentity != nil ? "Quit app" : "Stop tasks", disabled: monitor.error != nil,
+                           actionTitle: workload.appIdentity != nil ? "Quit app" : "Stop tasks", isActionDisabled: monitor.error != nil,
                            cancel: { review = nil }, confirm: {
                     monitor.stop(workload)
                     back()

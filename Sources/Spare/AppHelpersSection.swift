@@ -123,7 +123,7 @@ struct AppHelpersSection: View {
             let leftovers = browser ? sessions.filter { origins[$0.identity]?.isUnattended == true } : []
             if let closing = closingSessions {
                 ConfirmBox(message: "Close \(closing.count) separate session\(closing.count == 1 ? "" : "s")? \(HelperRole.session.consequence(browser: browser))",
-                           action: "Close sessions", cancel: { closingSessions = nil }, confirm: {
+                           actionTitle: "Close sessions", cancel: { closingSessions = nil }, confirm: {
                     monitor.endSessions(closing, in: workload)
                     closingSessions = nil
                 })
@@ -170,7 +170,7 @@ struct AppHelpersSection: View {
                 Text(reason).font(PanelFont.body(11.5)).foregroundStyle(theme.sub).fixedSize(horizontal: false, vertical: true)
             }
             if confirming == process.identity {
-                ConfirmBox(message: role.consequence(browser: browser), action: "End process", cancel: { confirming = nil }, confirm: {
+                ConfirmBox(message: role.consequence(browser: browser), actionTitle: "End process", cancel: { confirming = nil }, confirm: {
                     monitor.endHelper(process, role: role, in: workload)
                     confirming = nil
                 })

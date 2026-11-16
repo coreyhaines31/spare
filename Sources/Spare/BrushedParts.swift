@@ -19,50 +19,6 @@ struct FasciaKey: View {
     }
 }
 
-/// A recessed box: the reading tiles, confirm boxes and notices.
-struct Recess<Content: View>: View {
-    var tint: PanelStatus?
-    @ViewBuilder let content: Content
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        let color = tint.map { theme.color(for: $0) }
-        content
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 6).fill(color.map { $0.opacity(0.12) } ?? theme.field))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(color.map { $0.opacity(0.4) } ?? theme.line, lineWidth: 1))
-    }
-}
-
-/// A reviewed stop or quit: the consequence, Cancel (Esc) and a red action.
-struct ConfirmBox: View {
-    var title: String?
-    let message: String
-    var warning: String?
-    let action: String
-    var disabled = false
-    let cancel: () -> Void
-    let confirm: () -> Void
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        Recess {
-            VStack(alignment: .leading, spacing: 8) {
-                if let title { Text(title).font(PanelFont.body(13, .semibold)) }
-                Text(message).font(PanelFont.body(12)).fixedSize(horizontal: false, vertical: true)
-                if let warning {
-                    Label(warning, systemImage: "exclamationmark.triangle.fill").font(PanelFont.body(12, .medium))
-                        .foregroundStyle(theme.caution).fixedSize(horizontal: false, vertical: true)
-                }
-                HStack {
-                    Button("Cancel", action: cancel).buttonStyle(.panelCompact).keyboardShortcut(.cancelAction)
-                    Spacer()
-                    Button(action, role: .destructive, action: confirm).buttonStyle(.panelDestructive).disabled(disabled)
-                }
-            }
-        }
-    }
-}
-
 /// A reading in a recessed tile: caps label, value, and whatever detail follows.
 struct ReadingTile<Content: View>: View {
     let label: String

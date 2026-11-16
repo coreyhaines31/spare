@@ -18,7 +18,7 @@ struct IdleAppsSection: View {
             VStack(alignment: .leading, spacing: 0) {
                 if let confirming {
                     ConfirmBox(message: "Spare will ask \(confirming.count == 1 ? "this app" : "these \(confirming.count) apps") to quit normally. Apps with unsaved work will ask you to save first.",
-                               action: "Quit", cancel: { self.confirming = nil }, confirm: {
+                               actionTitle: "Quit", cancel: { self.confirming = nil }, confirm: {
                         for app in apps where confirming.contains(app.workload.id) { monitor.stop(app.workload) }
                         self.confirming = nil
                     }).padding(.horizontal, 14).padding(.vertical, 4)
