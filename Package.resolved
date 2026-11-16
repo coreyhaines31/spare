@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "panelkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/coreyhaines31/panelkit",
+      "state" : {
+        "branch" : "development",
+        "revision" : "7f017f4f152362de372042d51cb120834d346b62"
+      }
+    },
+    {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",

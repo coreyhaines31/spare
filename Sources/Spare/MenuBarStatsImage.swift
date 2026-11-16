@@ -1,7 +1,7 @@
 import AppKit
 import SpareCore
 
-/// The Spare icon followed by a small label-over-number column for each chosen reading.
+/// The Spare knob followed by a small label-over-number column for each chosen reading.
 enum MenuBarStatsImage {
     private static let labelFont = NSFont.systemFont(ofSize: 7.5, weight: .semibold)
     private static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
@@ -9,13 +9,13 @@ enum MenuBarStatsImage {
     private static let glyph: CGFloat = 18
     private static let gap: CGFloat = 4
 
-    static func image(elevated: Bool, stats: [MenuBarStat], readings: MenuBarReadings) -> NSImage {
-        guard !stats.isEmpty else { return GaugeGlyph.menuBarImage(elevated: elevated) }
+    static func image(knob: Double, stats: [MenuBarStat], readings: MenuBarReadings) -> NSImage {
+        guard !stats.isEmpty else { return KnobGlyph.image(value: knob) }
         // Columns are as wide as "100%" so the menu bar doesn't shift as numbers change.
         let column = max(width("100%", valueFont), stats.map { width($0.label, labelFont) }.max() ?? 0)
         let size = NSSize(width: glyph + CGFloat(stats.count) * (gap + column), height: height)
         let image = NSImage(size: size, flipped: true) { _ in
-            GaugeGlyph(elevated: elevated).draw(in: NSRect(x: 0, y: (height - glyph) / 2, width: glyph, height: glyph))
+            KnobGlyph.draw(value: knob, in: NSRect(x: 0, y: (height - glyph) / 2, width: glyph, height: glyph))
             for (index, stat) in stats.enumerated() {
                 let x = glyph + gap + CGFloat(index) * (gap + column)
                 draw(stat.label, labelFont, centeredIn: NSRect(x: x, y: 1, width: column, height: 9))

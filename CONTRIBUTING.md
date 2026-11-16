@@ -46,7 +46,7 @@ dist/Spare.app/Contents/MacOS/spare-cli list    # the command-line tool from you
 | `Sources/Spare` | The SwiftUI and AppKit app: the menu bar panel, detail views, the Recap window, and Sparkle updates. |
 | `Sources/SpareCLI` | The `spare` command-line tool, bundled in the app as `Contents/MacOS/spare-cli`. |
 | `Tests/SpareCoreTests` | Unit tests for `SpareCore`. |
-| `scripts` | `bundle.sh` builds the app, `icon/` draws the app icon, `release.sh` makes a signed release. |
+| `scripts` | `bundle.sh` builds the app, `release.sh` makes a signed release. |
 
 [How Spare works](docs/how-it-works.md) explains the measurements and heuristics behind the code.
 
