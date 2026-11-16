@@ -48,19 +48,19 @@ Install Spare, the free open-source macOS menu bar app from https://github.com/c
 4. Otherwise, download the -arm64.dmg asset from the latest release at https://github.com/coreyhaines31/spare/releases/latest, mount it, copy Spare.app into /Applications, and unmount it.
 5. Open Spare with: open /Applications/Spare.app
 6. If `command -v spare` finds nothing, link Spare's command-line tool: ln -sf /Applications/Spare.app/Contents/MacOS/spare-cli /opt/homebrew/bin/spare (use /usr/local/bin/spare with sudo if /opt/homebrew/bin doesn't exist).
-7. Run `spare status` to confirm it works, then tell me to look for the gauge icon in my menu bar. Spare has no Dock icon.
+7. Run `spare status` to confirm it works, then tell me to look for the knob icon in my menu bar. Spare has no Dock icon.
 ```
 
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
 
 ## First launch
 
-Spare is a menu bar app, so it has **no Dock icon and no app window by default**. When it opens, look for the gauge icon in the top-right of your menu bar. Spare opens its panel there each time it launches.
+Spare is a menu bar app, so it has **no Dock icon and no app window by default**. When it opens, look for the knob icon in the top-right of your menu bar. Spare opens its panel there each time it launches.
 
-- **Click the gauge** any time to open or close Spare.
+- **Click the knob** any time to open or close Spare. Its pointer turns as your Mac gets busier.
 - **Can't see the icon?** See [Troubleshooting](#troubleshooting). On MacBooks with a notch, a full menu bar can hide it.
 - **Prefer a window?** Choose **Open in a window** from the gear menu, or open Spare again from Applications.
-- **Want numbers in the menu bar?** Choose **Show in Menu Bar** from the gear menu and pick any of CPU, GPU, Memory, and Startup disk. Each appears as a percentage next to the gauge. All are off by default. While only a MacBook's own screen is in use, Spare shows just the first reading so it fits beside the notch, and shows them all again when you connect a display. Turn off **Just the first when only the laptop screen is in use** in the same menu to always show every reading.
+- **Want numbers in the menu bar?** Choose **Show in Menu Bar** from the gear menu and pick any of CPU, GPU, Memory, and Startup disk. Each appears as a percentage next to the knob. All are off by default. While only a MacBook's own screen is in use, Spare shows just the first reading so it fits beside the notch, and shows them all again when you connect a display. Turn off **Just the first when only the laptop screen is in use** in the same menu to always show every reading.
 
 The first readings appear within a few seconds. Spare doesn't need any permissions to start monitoring. A few optional features ask for one when you turn them on:
 

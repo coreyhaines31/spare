@@ -77,7 +77,7 @@ struct Dashboard: View {
                 Button(action: goBack) { Image(systemName: "chevron.left") }
                     .buttonStyle(.borderless).help("Back").accessibilityLabel("Back").keyboardShortcut("[", modifiers: .command)
             } else {
-                Image(nsImage: GaugeGlyph.menuBarImage(elevated: false)).renderingMode(.template).foregroundStyle(.secondary)
+                Image(nsImage: KnobGlyph.image(value: 0.2)).renderingMode(.template).foregroundStyle(.secondary)
             }
             Text(path.isEmpty ? (showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
             Spacer()

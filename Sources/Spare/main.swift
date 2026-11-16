@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = GaugeGlyph.menuBarImage(elevated: false)
+        item.button?.image = KnobGlyph.image(value: KnobGlyph.value(cpu: nil, pressure: nil, ready: false))
         item.button?.imagePosition = .imageOnly
         item.button?.setAccessibilityLabel("Spare")
         item.button?.target = self
@@ -26,7 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             let stats = monitor.shownMenuBarStats
             let values = monitor.menuBarReadings
-            item.button?.image = MenuBarStatsImage.image(elevated: health.level > 0, stats: stats, readings: values)
+            let latest = monitor.samples.last
+            let knob = KnobGlyph.value(cpu: latest?.cpu, pressure: latest?.pressure, ready: monitor.ready && monitor.error == nil)
+            item.button?.image = MenuBarStatsImage.image(knob: knob, stats: stats, readings: values)
             let readings = stats.map { "\($0.title) \(values.text($0))" }
             item.button?.setAccessibilityLabel((["Spare: \(health.title)"] + readings).joined(separator: ", "))
             item.button?.toolTip = "Spare — \(health.title)"
