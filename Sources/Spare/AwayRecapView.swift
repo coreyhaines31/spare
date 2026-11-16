@@ -13,8 +13,9 @@ struct AwayRecapView: View {
         "\(RecapFormat.duration(recap.report.totals.observed)) recorded · \(recap.report.totals.knownPressureSeconds > 0 ? RecapFormat.duration(recap.report.totals.pressureSeconds) + " elevated memory pressure" : "Memory pressure unavailable")"
     }
     var body: some View {
-        Disclosure("While you were away", subtitle: totals, initiallyExpanded: true) {
+        Disclosure("While you were away", subtitle: "\(RecapFormat.duration(recap.report.totals.observed)) recorded", initiallyExpanded: true) {
             VStack(alignment: .leading, spacing: 0) {
+                PanelNote(totals).padding(.bottom, 4)
                 if recap.report.unobserved >= 60 {
                     PanelNote("\(RecapFormat.duration(recap.report.unobserved)) unobserved").padding(.bottom, 4)
                 }
