@@ -167,7 +167,7 @@ struct Dashboard: View {
         VStack(spacing: 0) {
             ResourceSummary(monitor: monitor, sortCPU: $sortCPU)
             if let recap = monitor.awayRecap {
-                AwayRecapView(recap: recap, monitor: monitor).padding(.horizontal, 16).padding(.bottom, 12)
+                AwayRecapView(recap: recap, monitor: monitor)
             }
             if let swarm {
                 suggestionRow(swarm, subtitle: "\(swarm.processes.count) copies running · \(DisplayFormat.percent(swarm.cpu)) CPU · Something may be stuck in a loop",

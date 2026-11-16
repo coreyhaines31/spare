@@ -1,39 +1,50 @@
 import SwiftUI
 import SpareCore
+import PanelKit
 
 struct AwayRecapView: View {
     let recap: AwayRecap
     @ObservedObject var monitor: Monitor
+    @Environment(\.brushed) private var theme
     private var current: [String: Workload] {
         Dictionary(monitor.workloads.map { (RecapHistory.workloadID($0.id), $0) }, uniquingKeysWith: { first, _ in first })
     }
+    private var totals: String {
+        "\(RecapFormat.duration(recap.report.totals.observed)) recorded · \(recap.report.totals.knownPressureSeconds > 0 ? RecapFormat.duration(recap.report.totals.pressureSeconds) + " elevated memory pressure" : "Memory pressure unavailable")"
+    }
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Label("While you were away", systemImage: "clock.badge.checkmark").font(.subheadline.weight(.semibold))
-                ContextHelp(title: "While you were away", text: "Starts after five minutes without keyboard or mouse input and ends when input resumes. The first five minutes are excluded. This describes observed resource use, not completed or productive work. Sleep and missing samples are unobserved. This summary stays in memory for up to 18 hours or until you dismiss it or quit Spare.")
-                Spacer()
-                Button { monitor.dismissAwayRecap() } label: { Image(systemName: "xmark") }
-                    .buttonStyle(.borderless).accessibilityLabel("Dismiss away recap")
-            }
-            Text("\(RecapFormat.duration(recap.report.totals.observed)) recorded · \(recap.report.totals.knownPressureSeconds > 0 ? RecapFormat.duration(recap.report.totals.pressureSeconds) + " elevated memory pressure" : "Memory pressure unavailable")")
-                .font(.caption).foregroundStyle(.secondary)
-            if recap.report.unobserved >= 60 {
-                Text("\(RecapFormat.duration(recap.report.unobserved)) unobserved").font(.caption).foregroundStyle(.secondary)
-            }
-            ForEach(recap.leaders) { item in
+        Disclosure("While you were away", subtitle: totals, initiallyExpanded: true) {
+            VStack(alignment: .leading, spacing: 0) {
+                if recap.report.unobserved >= 60 {
+                    PanelNote("\(RecapFormat.duration(recap.report.unobserved)) unobserved").padding(.bottom, 4)
+                }
+                ForEach(recap.leaders) { item in
+                    Row(item.name) { status(for: item) }
+                }
                 HStack {
-                    Text(item.name).lineLimit(1)
+                    Text("Returned \(recap.ended.formatted(.dateTime.hour().minute()))").font(PanelFont.body(11.5)).foregroundStyle(theme.sub)
                     Spacer()
-                    Text(!monitor.ready || monitor.error != nil ? "Checking status…" : current[item.id] == nil ? "No longer detected" : "Running now")
-                        .foregroundStyle(.secondary)
-                }.font(.caption)
+                    Button("Open recap") { monitor.onOpenRecap?() }.buttonStyle(.panelLink)
+                }.padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 10)
             }
-            HStack {
-                Text("Returned \(recap.ended.formatted(.dateTime.hour().minute()))").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button("Open recap") { monitor.onOpenRecap?() }.buttonStyle(.link).font(.caption)
-            }
-        }.padding(12).background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .overlay(alignment: .topTrailing) {
+            HStack(spacing: 8) {
+                ContextHelp(title: "While you were away", text: "Starts after five minutes without keyboard or mouse input and ends when input resumes. The first five minutes are excluded. This describes observed resource use, not completed or productive work. Sleep and missing samples are unobserved. This summary stays in memory for up to 18 hours or until you dismiss it or quit Spare.")
+                Button { monitor.dismissAwayRecap() } label: { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
+                    .buttonStyle(.plain).foregroundStyle(theme.sub).accessibilityLabel("Dismiss away recap")
+            }.padding(.top, 10).padding(.trailing, 14)
+        }
+        .overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
+    }
+
+    @ViewBuilder private func status(for item: RecapWorkload) -> some View {
+        if !monitor.ready || monitor.error != nil {
+            Text("Checking status…").font(PanelFont.body(11)).foregroundStyle(theme.sub)
+        } else if current[item.id] == nil {
+            Text("No longer detected").font(PanelFont.body(11)).foregroundStyle(theme.sub)
+        } else {
+            StatusLight(.go, "Running now")
+        }
     }
 }
