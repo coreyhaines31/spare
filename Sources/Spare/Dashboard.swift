@@ -1,5 +1,6 @@
 import SwiftUI
 import SpareCore
+import PanelKit
 import ServiceManagement
 
 struct Dashboard: View {
@@ -30,64 +31,71 @@ struct Dashboard: View {
             (monitor.memoryTrends[$0.id]?.change ?? 0) < (monitor.memoryTrends[$1.id]?.change ?? 0)
         }
     }
+    @Environment(\.brushed) private var theme
     var body: some View {
         VStack(spacing: 0) {
-            toolbar
-            Divider()
+            if !path.isEmpty || showingActivity { fascia }
             if let request = monitor.pendingRequest {
                 CommandRequestBanner(request: request, monitor: monitor)
-                Divider()
             }
-            if let selection = path.last {
-                WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
-            } else if showingActivity {
-                ActivityView(monitor: monitor, select: { path.append($0) })
-            } else {
-                overview
-            }
+            Group {
+                if let selection = path.last {
+                    WorkloadDetail(selection: selection, monitor: monitor, back: goBack, select: { path.append($0) }).id(selection.id)
+                } else if showingActivity {
+                    ActivityView(monitor: monitor, select: { path.append($0) })
+                } else {
+                    overview
+                }
+            }.frame(maxHeight: .infinity, alignment: .top)
             if let notice = monitor.notice {
-                Divider()
-                HStack(alignment: .top) {
-                    Text(notice).font(.callout).fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 4)
-                    Button { monitor.notice = nil } label: { Image(systemName: "xmark") }
-                        .buttonStyle(.borderless).help("Dismiss message").accessibilityLabel("Dismiss message")
-                }.padding(12)
-            }
-            Divider()
-            HStack(spacing: 6) {
-                Circle().fill(monitor.error == nil ? Color.green : Color.orange).frame(width: 5, height: 5)
-                Text(monitor.error == nil ? "Live · On this Mac only" : "Reconnecting…").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button("About these readings") { showingHelp = true }.buttonStyle(.link).font(.caption)
-                    .popover(isPresented: $showingHelp) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("About these readings").font(.headline)
-                            Text("Updated every 3 seconds. App totals include their helpers. CPU is a share of your entire Mac. Memory estimates may overlap and won’t add up to the system total.")
-                            Text("Memory pressure describes how hard macOS is working to make room. Lots of used memory can be normal.")
-                        }.font(.callout).padding(16).frame(width: 300)
+                Recess {
+                    HStack(alignment: .top) {
+                        Text(notice).font(PanelFont.body(12)).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 4)
+                        Button { monitor.notice = nil } label: { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
+                            .buttonStyle(.plain).foregroundStyle(theme.sub).help("Dismiss message").accessibilityLabel("Dismiss message")
                     }
-            }.padding(.horizontal, 14).padding(.vertical, 10)
-        }.font(.body).frame(width: SpareLayout.width, height: SpareLayout.height)
-            .background(Color(nsColor: .windowBackgroundColor))
-    }
-    private var toolbar: some View {
-        HStack(spacing: 10) {
-            if !path.isEmpty || showingActivity {
-                Button(action: goBack) { Image(systemName: "chevron.left") }
-                    .buttonStyle(.borderless).help("Back").accessibilityLabel("Back").keyboardShortcut("[", modifiers: .command)
-            } else {
-                Image(nsImage: KnobGlyph.image(value: 0.2)).renderingMode(.template).foregroundStyle(.secondary)
+                }.padding(.horizontal, 14).padding(.vertical, 8)
             }
-            Text(path.isEmpty ? (showingActivity ? "Recent Activity" : "Spare") : "Details").font(.headline)
-            Spacer()
-            Button { monitor.onOpenRecap?() } label: { Image(systemName: "chart.bar.xaxis") }
-                .buttonStyle(.borderless).help("Daily and weekly recap").accessibilityLabel("Daily and weekly recap")
+            footer
+        }.font(PanelFont.body(13)).foregroundStyle(theme.ink)
+            .frame(width: SpareLayout.width, height: SpareLayout.height)
+            .background(theme.background)
+            .panelAccent(PanelAccent.spare)
+    }
+    /// The metal fascia: nameplate and toolbar keys, then the load meter on the overview or a Back key elsewhere.
+    /// On the overview it scrolls with the cards, so the list has the full height once you scroll.
+    @ViewBuilder private var fascia: some View {
+        let detail = !path.isEmpty || showingActivity
+        Group {
+            if detail {
+                Fascia(nameplate: path.isEmpty ? "Recent Activity" : "Details") {
+                    Button(action: goBack) { Label("Back", systemImage: "chevron.left") }
+                        .buttonStyle(.key).help("Back").keyboardShortcut("[", modifiers: .command)
+                }
+            } else {
+                Fascia(nameplate: "Load", detail: "×10 percent CPU", label: "This Mac") { loadMeter }
+            }
+        }.overlay(alignment: .topTrailing) { toolbarKeys.padding(.top, 9).padding(.trailing, 14) }
+    }
+    /// CPU in use on a 0–10 scale (tens of percent), red past 8.
+    private var loadMeter: some View {
+        let cpu = monitor.ready && monitor.error == nil ? monitor.samples.last?.cpu : nil
+        return Meter(MeterConfig(majorTicks: 10, minorTicks: 2, zones: [0.8...1],
+                                 labels: [.init(0, "0"), .init(0.2, "2"), .init(0.4, "4"), .init(0.6, "6"), .init(0.8, "8"), .init(1, "10")],
+                                 word: "LOAD", accessibilityLabel: "Load meter"),
+                     value: (cpu ?? 0) / 100,
+                     accessibilityValue: cpu.map { "\(DisplayFormat.percent($0)) CPU" } ?? "Measuring")
+    }
+    private var toolbarKeys: some View {
+        HStack(spacing: 5) {
+            Button { monitor.onOpenRecap?() } label: { FasciaKey(symbol: "chart.bar.xaxis") }
+                .buttonStyle(.plain).help("Daily and weekly recap").accessibilityLabel("Daily and weekly recap")
             Button {
                 path.removeAll()
                 showingActivity.toggle()
-            } label: { Image(systemName: "clock.arrow.circlepath") }
-                .buttonStyle(.borderless).help("Recent activity").accessibilityLabel("Recent activity")
+            } label: { FasciaKey(symbol: "clock.arrow.circlepath") }
+                .buttonStyle(.plain).help("Recent activity").accessibilityLabel("Recent activity")
             Menu {
                 Button("Open in a window") { monitor.onOpenWindow?() }
                 Toggle("Launch at login", isOn: Binding(get: { monitor.launchesAtLogin }, set: monitor.setLaunchAtLogin))
@@ -113,10 +121,26 @@ struct Dashboard: View {
                 Button("Check for Updates…") { monitor.onCheckForUpdates?() }
                 Button("Open Activity Monitor") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app")) }
                 Button("Quit Spare") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
-            } label: { Image(systemName: "gearshape") }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 20)
+            } label: { FasciaKey(symbol: "gearshape") }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
                 .help("Settings").accessibilityLabel("Settings")
-        }.padding(.horizontal, 16).padding(.vertical, 12)
+        }
+    }
+    private var footer: some View {
+        HStack(spacing: 6) {
+            StatusLight(monitor.error == nil ? .go : .caution, monitor.error == nil ? "Live · On this Mac only" : "Reconnecting…")
+            Spacer()
+            Button("About these readings") { showingHelp = true }.buttonStyle(.plain)
+                .font(PanelFont.body(12)).foregroundStyle(theme.sub)
+                .popover(isPresented: $showingHelp) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("About these readings").font(.headline)
+                        Text("Updated every 3 seconds. App totals include their helpers. CPU is a share of your entire Mac. Memory estimates may overlap and won’t add up to the system total.")
+                        Text("Memory pressure describes how hard macOS is working to make room. Lots of used memory can be normal.")
+                    }.font(.callout).padding(16).frame(width: 300)
+                }
+        }.padding(.horizontal, 14).padding(.top, 9).padding(.bottom, 10)
+            .overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
     }
     /// Sustained CPU load with healthy memory: the list is most useful sorted by CPU.
     private var cpuIsTheConcern: Bool {
@@ -127,6 +151,7 @@ struct Dashboard: View {
     private var overview: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                fascia
                 overviewCards
                 Divider()
                 Section {

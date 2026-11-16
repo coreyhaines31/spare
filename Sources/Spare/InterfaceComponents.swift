@@ -2,8 +2,8 @@ import SwiftUI
 import SpareCore
 
 enum SpareLayout {
-    static let width: CGFloat = 440
-    static let height: CGFloat = 640
+    static let width: CGFloat = 340
+    static let height: CGFloat = 700
 }
 
 struct NativeSearchField: NSViewRepresentable {
