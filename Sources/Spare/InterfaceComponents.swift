@@ -7,31 +7,6 @@ enum SpareLayout {
     static let height: CGFloat = 700
 }
 
-struct NativeSearchField: NSViewRepresentable {
-    @Binding var text: String
-    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
-    func makeNSView(context: Context) -> NSSearchField {
-        let field = NSSearchField()
-        field.placeholderString = "Search apps, projects, or ports"
-        field.delegate = context.coordinator
-        field.sendsSearchStringImmediately = true
-        field.setAccessibilityLabel("Search apps, projects, or ports")
-        return field
-    }
-    func updateNSView(_ field: NSSearchField, context: Context) {
-        context.coordinator.text = $text
-        if field.stringValue != text { field.stringValue = text }
-    }
-    final class Coordinator: NSObject, NSSearchFieldDelegate {
-        var text: Binding<String>
-        init(text: Binding<String>) { self.text = text }
-        func controlTextDidChange(_ notification: Notification) {
-            guard let field = notification.object as? NSSearchField else { return }
-            text.wrappedValue = field.stringValue
-        }
-    }
-}
-
 struct WorkloadRow: View {
     let workload: Workload
     let sortCPU: Bool
@@ -40,32 +15,21 @@ struct WorkloadRow: View {
     var growth: String?
     let select: () -> Void
     @State private var hovered = false
+    @Environment(\.brushed) private var theme
     var body: some View {
         Button(action: select) {
-            HStack(spacing: 10) {
-                WorkloadIcon(workload: workload)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(workload.name).font(.body.weight(.medium)).lineLimit(1)
-                    Text([workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:)), note]
-                        .compactMap { $0 }.joined(separator: " · "))
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Row(workload.name, icon: WorkloadIcon(workload: workload, size: 22),
+                subtitle: [workload.subtitle, workload.commandSummary(arguments: ProcessArguments.cached(for:)), note]
+                    .compactMap { $0 }.joined(separator: " · "),
+                value: sortCPU ? DisplayFormat.percent(workload.cpu) : DisplayFormat.memory(workload.memory),
+                secondary: sortCPU ? DisplayFormat.memory(workload.memory) : "\(DisplayFormat.percent(workload.cpu)) CPU",
+                options: hovered ? [.chevron, .selected] : [.chevron]) {
+                if let growth {
+                    Label("Growing", systemImage: "chart.line.uptrend.xyaxis").labelStyle(.iconOnly)
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(theme.caution)
+                        .help("Memory growing · \(growth)").accessibilityLabel("Memory growing")
                 }
-                Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 3) {
-                    HStack(spacing: 4) {
-                        if let growth {
-                            Image(systemName: "chart.line.uptrend.xyaxis").font(.caption).foregroundStyle(.orange)
-                                .help("Memory growing · \(growth)").accessibilityLabel("Memory growing")
-                        }
-                        Text(sortCPU ? DisplayFormat.percent(workload.cpu) : DisplayFormat.memory(workload.memory))
-                            .font(.body).monospacedDigit()
-                    }
-                    Text(sortCPU ? DisplayFormat.memory(workload.memory) : "\(DisplayFormat.percent(workload.cpu)) CPU")
-                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                }
-                Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 8).padding(.vertical, 8).contentShape(Rectangle())
-                .background(hovered ? Color(nsColor: .quaternaryLabelColor).opacity(0.4) : .clear, in: RoundedRectangle(cornerRadius: 6))
+            }
         }.buttonStyle(.plain).onHover { hovered = $0 }
             .help("View \(workload.name)")
     }
