@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "mac-app-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/coreyhaines31/mac-app-kit",
+      "state" : {
+        "branch" : "feature/2-panelkit",
+        "revision" : "ac7fc565fd4c43646df58dd892962c8a791036db"
+      }
+    },
+    {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",

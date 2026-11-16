@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import SpareCore
+import PanelKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let monitor = Monitor()
@@ -12,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        PanelKit.registerFonts()
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = KnobGlyph.image(value: KnobGlyph.value(cpu: nil, pressure: nil, ready: false))
         item.button?.imagePosition = .imageOnly

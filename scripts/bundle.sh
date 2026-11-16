@@ -12,6 +12,8 @@ cp "$BIN_DIR/SpareCLI" dist/Spare.app/Contents/MacOS/spare-cli
 ditto "$BIN_DIR/Sparkle.framework" dist/Spare.app/Contents/Frameworks/Sparkle.framework
 install_name_tool -add_rpath @executable_path/../Frameworks dist/Spare.app/Contents/MacOS/Spare
 cp Resources/Info.plist dist/Spare.app/Contents/Info.plist
+# PanelKit's fonts. The app stops at launch if this bundle is missing.
+ditto "$BIN_DIR/PanelKit_PanelKit.bundle" dist/Spare.app/Contents/Resources/PanelKit_PanelKit.bundle
 # The Brushed app icon, exported from mac-app-kit (icons/spare/spare.icns).
 cp Resources/Spare.icns dist/Spare.app/Contents/Resources/Spare.icns
 codesign --force --sign - dist/Spare.app/Contents/MacOS/spare-cli
