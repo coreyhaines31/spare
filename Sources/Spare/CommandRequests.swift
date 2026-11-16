@@ -171,7 +171,7 @@ extension Monitor {
 struct CommandRequestBanner: View {
     let request: PendingRequest
     @ObservedObject var monitor: Monitor
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
 
     var body: some View {
         Recess(tint: .caution) {

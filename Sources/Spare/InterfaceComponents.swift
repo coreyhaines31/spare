@@ -15,7 +15,7 @@ struct WorkloadRow: View {
     var growth: String?
     let select: () -> Void
     @State private var hovered = false
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Button(action: select) {
             Row(workload.name, icon: WorkloadIcon(workload: workload, size: 22),
@@ -40,7 +40,7 @@ struct ResourceSummary: View {
     @ObservedObject var monitor: Monitor
     /// Clicking a reading sorts the list below by that resource.
     @Binding var sortCPU: Bool
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Verdict(monitor.error != nil ? "Readings unavailable" : monitor.health.title,

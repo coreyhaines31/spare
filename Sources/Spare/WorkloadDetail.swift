@@ -13,7 +13,7 @@ struct WorkloadDetail: View {
     private var activity: AgentActivity? { latest?.activity(in: monitor.agentActivity) }
     /// The reviewed processes' activity now, so a stop review warns if they start working.
     private var liveActivity: AgentActivity? { workload.activity(in: monitor.agentActivity) }
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {

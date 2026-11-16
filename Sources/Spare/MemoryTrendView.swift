@@ -4,7 +4,7 @@ import PanelKit
 
 struct MemoryTrendView: View {
     let trend: MemoryTrend
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     private var peak: UInt64 { max(1, trend.points.map(\.bytes).max() ?? 1) }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

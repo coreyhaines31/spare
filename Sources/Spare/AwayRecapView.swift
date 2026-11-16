@@ -5,7 +5,7 @@ import PanelKit
 struct AwayRecapView: View {
     let recap: AwayRecap
     @ObservedObject var monitor: Monitor
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     private var current: [String: Workload] {
         Dictionary(monitor.workloads.map { (RecapHistory.workloadID($0.id), $0) }, uniquingKeysWith: { first, _ in first })
     }

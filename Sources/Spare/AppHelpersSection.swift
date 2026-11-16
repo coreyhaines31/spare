@@ -14,7 +14,7 @@ struct AppHelpersSection: View {
     @State private var menuUnavailable = false
     @State private var memorySaver = ChromeMemorySaver.unknown
     private let collapsedCount = 8
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
 
     private var browser: Bool { ProcessClassifier.isBrowser(workload.name) }
     private var helpers: [(process: ProcessRecord, role: HelperRole)] {

@@ -3,15 +3,10 @@ import SwiftUI
 
 // Small pieces of the Brushed popover that PanelKit doesn't have yet, drawn with PanelKit's tokens.
 
-extension EnvironmentValues {
-    /// PanelKit's colours for the current appearance.
-    var brushed: PanelTheme { panelThemeOverride ?? PanelTheme.resolve(colorScheme) }
-}
-
 /// A 22-point metal key with a symbol, for the toolbar buttons that sit in the fascia.
 struct FasciaKey: View {
     let symbol: String
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Image(systemName: symbol)
             .font(.system(size: 11, weight: .semibold))
@@ -38,7 +33,7 @@ struct SpareButtonStyle: ButtonStyle {
         let configuration: Configuration
         let kind: Kind
         let compact: Bool
-        @Environment(\.brushed) private var theme
+        @Environment(\.panelTheme) private var theme
         @Environment(\.isEnabled) private var isEnabled
         var body: some View {
             let shape = RoundedRectangle(cornerRadius: compact ? 4 : 5)
@@ -74,7 +69,7 @@ extension ButtonStyle where Self == SpareButtonStyle {
 struct Recess<Content: View>: View {
     var tint: PanelStatus?
     @ViewBuilder let content: Content
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         let color = tint.map { theme.color(for: $0) }
         content
@@ -94,7 +89,7 @@ struct ConfirmBox: View {
     var disabled = false
     let cancel: () -> Void
     let confirm: () -> Void
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Recess {
             VStack(alignment: .leading, spacing: 8) {
@@ -118,7 +113,7 @@ struct ConfirmBox: View {
 struct ReadingTile<Content: View>: View {
     let label: String
     @ViewBuilder let content: Content
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Recess {
             VStack(alignment: .leading, spacing: 5) {
@@ -132,7 +127,7 @@ struct ReadingTile<Content: View>: View {
 /// A 22-point metal tile with a symbol, for rows whose item has no app icon.
 struct SymbolTile: View {
     let symbol: String
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Image(systemName: symbol)
             .font(.system(size: 11, weight: .semibold))
@@ -148,7 +143,7 @@ struct SymbolTile: View {
 struct TextSection: View {
     let heading: String
     let text: String
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeader(heading)
@@ -163,7 +158,7 @@ struct TextSection: View {
 struct PanelNote: View {
     let text: String
     var color: Color?
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     init(_ text: String, color: Color? = nil) {
         self.text = text
         self.color = color
@@ -182,7 +177,7 @@ struct WrapRow<Icon: View, Trailing: View>: View {
     let subtitle: String
     let icon: Icon
     @ViewBuilder let trailing: Trailing
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         HStack(spacing: 10) {
             icon.frame(width: 22, height: 22)
@@ -203,7 +198,7 @@ struct OpenRow<Icon: View>: View {
     let name: String
     let subtitle: String
     let icon: Icon
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         WrapRow(name: name, subtitle: subtitle, icon: icon) {
             Text("›").font(PanelFont.body(15)).foregroundStyle(theme.sub).accessibilityHidden(true)

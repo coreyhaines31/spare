@@ -7,7 +7,7 @@ struct StraysSection: View {
     @ObservedObject var monitor: Monitor
     @State private var expanded = false
     @State private var confirming: Set<ProcessIdentity>?
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
 
     var body: some View {
         let strays = monitor.strays

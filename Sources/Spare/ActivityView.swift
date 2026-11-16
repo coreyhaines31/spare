@@ -5,7 +5,7 @@ import PanelKit
 struct ActivityView: View {
     @ObservedObject var monitor: Monitor
     let select: (Workload) -> Void
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
 
     var body: some View {
         ScrollView {

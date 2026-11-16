@@ -7,7 +7,7 @@ struct IdleAppsSection: View {
     @ObservedObject var monitor: Monitor
     @State private var expanded = false
     @State private var confirming: Set<String>?
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
 
     var body: some View {
         let apps = monitor.idleApps

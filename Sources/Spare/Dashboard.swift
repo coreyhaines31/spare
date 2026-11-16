@@ -31,7 +31,7 @@ struct Dashboard: View {
             (monitor.memoryTrends[$0.id]?.change ?? 0) < (monitor.memoryTrends[$1.id]?.change ?? 0)
         }
     }
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         VStack(spacing: 0) {
             if !path.isEmpty || showingActivity { fascia }
@@ -246,7 +246,7 @@ struct Sparkline: Shape {
 struct WorkloadIcon: View {
     let workload: Workload
     var size: CGFloat = 32
-    @Environment(\.brushed) private var theme
+    @Environment(\.panelTheme) private var theme
     var body: some View {
         Group {
             if let path = workload.appPath { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable() }
