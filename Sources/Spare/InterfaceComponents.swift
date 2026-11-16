@@ -73,7 +73,7 @@ struct ResourceSummary: View {
         return ReadingTile("CPU", value: monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…") {
             Tape(monitor.ready ? sample.cpu / 100 : 0, status: busy ? .caution : nil).accessibilityHidden(true)
             Text(monitor.ready ? cpuCaption(sample) : " ")
-                .lineLimit(1).truncationMode(.middle)
+                .lineLimit(1).minimumScaleFactor(0.8).truncationMode(.middle)
         }.contentShape(Rectangle())
     }
 
