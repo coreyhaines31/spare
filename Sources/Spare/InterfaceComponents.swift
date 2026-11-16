@@ -91,7 +91,7 @@ struct ResourceSummary: View {
         return ReadingTile(label: "Memory pressure") {
             PressureBadge(pressure: state).frame(height: 17)
             Text("\(DisplayFormat.memory(sample.memory)) of \(DisplayFormat.memory(sample.physical)) in use")
-                .font(PanelFont.body(11)).foregroundStyle(theme.sub).lineLimit(1)
+                .font(PanelFont.body(11)).foregroundStyle(theme.sub).lineLimit(1).minimumScaleFactor(0.8)
         }.contentShape(Rectangle())
     }
 }
