@@ -1,12 +1,12 @@
 {
   "pins" : [
     {
-      "identity" : "mac-app-kit",
+      "identity" : "panelkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/coreyhaines31/mac-app-kit",
+      "location" : "https://github.com/coreyhaines31/panelkit",
       "state" : {
-        "branch" : "feature/2-panelkit",
-        "revision" : "ac7fc565fd4c43646df58dd892962c8a791036db"
+        "revision" : "40e4cc589a9bae305966df8120a6507e655c35b0",
+        "version" : "0.1.0"
       }
     },
     {
