@@ -9,13 +9,14 @@ struct AwayRecapView: View {
     private var current: [String: Workload] {
         Dictionary(monitor.workloads.map { (RecapHistory.workloadID($0.id), $0) }, uniquingKeysWith: { first, _ in first })
     }
-    private var totals: String {
-        "\(RecapFormat.duration(recap.report.totals.observed)) recorded · \(recap.report.totals.knownPressureSeconds > 0 ? RecapFormat.duration(recap.report.totals.pressureSeconds) + " elevated memory pressure" : "Memory pressure unavailable")"
+    /// The second half of the old "recorded · pressure" line; the recorded time is the disclosure's subtitle.
+    private var pressure: String {
+        recap.report.totals.knownPressureSeconds > 0 ? RecapFormat.duration(recap.report.totals.pressureSeconds) + " elevated memory pressure" : "Memory pressure unavailable"
     }
     var body: some View {
         Disclosure("While you were away", subtitle: "\(RecapFormat.duration(recap.report.totals.observed)) recorded", initiallyExpanded: true) {
             VStack(alignment: .leading, spacing: 0) {
-                PanelNote(totals).padding(.bottom, 4)
+                PanelNote(pressure).padding(.bottom, 4)
                 if recap.report.unobserved >= 60 {
                     PanelNote("\(RecapFormat.duration(recap.report.unobserved)) unobserved").padding(.bottom, 4)
                 }
