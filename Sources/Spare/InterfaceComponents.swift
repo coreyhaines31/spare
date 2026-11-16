@@ -70,11 +70,10 @@ struct ResourceSummary: View {
 
     private func cpuReading(_ sample: SystemSample) -> some View {
         let busy = sample.cpu > 85
-        return ReadingTile(label: "CPU") {
-            Text(monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…").font(PanelFont.body(13, .semibold))
+        return ReadingTile("CPU", value: monitor.ready ? "\(DisplayFormat.percent(sample.cpu)) in use" : "Measuring…") {
             Tape(monitor.ready ? sample.cpu / 100 : 0, status: busy ? .caution : nil).accessibilityHidden(true)
             Text(monitor.ready ? cpuCaption(sample) : " ")
-                .font(PanelFont.body(11)).foregroundStyle(theme.sub).lineLimit(1).truncationMode(.middle)
+                .lineLimit(1).truncationMode(.middle)
         }.contentShape(Rectangle())
     }
 
@@ -88,10 +87,10 @@ struct ResourceSummary: View {
 
     private func pressureReading(_ sample: SystemSample) -> some View {
         let state = monitor.error != nil ? MemoryPressure.unknown : sample.pressure
-        return ReadingTile(label: "Memory pressure") {
+        return ReadingTile("Memory pressure") {
             PressureBadge(pressure: state).frame(height: 17)
             Text("\(DisplayFormat.memory(sample.memory)) of \(DisplayFormat.memory(sample.physical)) in use")
-                .font(PanelFont.body(11)).foregroundStyle(theme.sub).lineLimit(1).minimumScaleFactor(0.8)
+                .lineLimit(1).minimumScaleFactor(0.8)
         }.contentShape(Rectangle())
     }
 }

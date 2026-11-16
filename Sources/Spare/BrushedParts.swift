@@ -19,21 +19,6 @@ struct FasciaKey: View {
     }
 }
 
-/// A reading in a recessed tile: caps label, value, and whatever detail follows.
-struct ReadingTile<Content: View>: View {
-    let label: String
-    @ViewBuilder let content: Content
-    @Environment(\.panelTheme) private var theme
-    var body: some View {
-        Recess {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(label).font(PanelFont.condensed(10, .semibold)).tracking(2).textCase(.uppercase).foregroundStyle(theme.sub)
-                content
-            }
-        }
-    }
-}
-
 /// A 22-point metal tile with a symbol, for rows whose item has no app icon.
 struct SymbolTile: View {
     let symbol: String

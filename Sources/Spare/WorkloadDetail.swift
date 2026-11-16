@@ -27,13 +27,9 @@ struct WorkloadDetail: View {
                     }
                 }.padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 10)
                 HStack(spacing: 8) {
-                    ReadingTile(label: "Memory") {
-                        Text(DisplayFormat.memory(workload.memory)).font(PanelFont.body(13, .semibold)).monospacedDigit()
-                    }
-                    ReadingTile(label: "CPU") {
-                        Text(DisplayFormat.percent(workload.cpu)).font(PanelFont.body(13, .semibold)).monospacedDigit()
-                    }
-                }.padding(.horizontal, 14)
+                    ReadingTile("Memory", value: DisplayFormat.memory(workload.memory))
+                    ReadingTile("CPU", value: DisplayFormat.percent(workload.cpu))
+                }.fixedSize(horizontal: false, vertical: true).padding(.horizontal, 14)
                 PanelNote(review != nil ? "Reviewing a fixed set of processes. New processes won’t be included." : latest == nil ? "This item is no longer detected. Readings below are its last captured values." : "Live readings · Updated every 3 seconds")
                     .padding(.vertical, 8)
                 if review == nil && workload.kind == .application && workload.processes.count > 1 {
