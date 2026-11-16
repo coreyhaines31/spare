@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import PanelKit
 import SpareCore
 
 /// A request from the `spare` command, shown in the panel until the person approves or declines it.
@@ -170,24 +171,25 @@ extension Monitor {
 struct CommandRequestBanner: View {
     let request: PendingRequest
     @ObservedObject var monitor: Monitor
+    @Environment(\.brushed) private var theme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label(request.title, systemImage: "terminal").font(.headline)
-            Text(request.detail).font(.callout).fixedSize(horizontal: false, vertical: true)
-            if let workload = request.workload, let warning = workload.activity(in: monitor.agentActivity)?.stopWarning(agent: workload.name) {
-                Label(warning, systemImage: "exclamationmark.triangle.fill").font(.callout.weight(.medium))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            HStack {
-                Button("Don’t \(request.action)") { monitor.declineRequest() }.keyboardShortcut(.cancelAction)
-                Spacer()
-                Button(request.action, role: .destructive) { monitor.approveRequest() }
-                    .buttonStyle(.borderedProminent).tint(.red)
+        Recess(tint: .caution) {
+            VStack(alignment: .leading, spacing: 8) {
+                Label(request.title, systemImage: "terminal").font(PanelFont.body(13, .semibold))
+                Text(request.detail).font(PanelFont.body(12)).fixedSize(horizontal: false, vertical: true)
+                if let workload = request.workload, let warning = workload.activity(in: monitor.agentActivity)?.stopWarning(agent: workload.name) {
+                    Label(warning, systemImage: "exclamationmark.triangle.fill").font(PanelFont.body(12, .medium))
+                        .foregroundStyle(theme.caution).fixedSize(horizontal: false, vertical: true)
+                }
+                HStack {
+                    Button("Don’t \(request.action)") { monitor.declineRequest() }.buttonStyle(.key).keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button(request.action, role: .destructive) { monitor.approveRequest() }.buttonStyle(.stopKey)
+                }
             }
         }
-        .padding(12)
-        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-        .padding(.horizontal, 12).padding(.vertical, 10)
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .overlay(alignment: .bottom) { Rectangle().fill(theme.line).frame(height: 1) }
     }
 }
