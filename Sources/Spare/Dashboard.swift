@@ -179,8 +179,8 @@ struct Dashboard: View {
     }
     private var listControls: some View {
         VStack(spacing: 0) {
-            Field(text: $query, prompt: "Search apps, projects, or ports").padding(.top, 10)
-                .accessibilityLabel("Search apps, projects, or ports")
+            // AppKit's search field, for its clear button and Esc to clear, as before the Brushed restyle.
+            NativeSearchField(text: $query, prompt: "Search apps, projects, or ports", focusesOnAppear: false).padding(.top, 10)
             Tabs(WorkloadFilter.allCases.map { PanelChoice($0, $0.rawValue) }, selection: $filter)
                 .accessibilityLabel("Show")
             HStack {
