@@ -7,7 +7,7 @@ let package = Package(
     products: [.executable(name: "Spare", targets: ["Spare"]), .executable(name: "SpareCLI", targets: ["SpareCLI"])],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
-        .package(url: "https://github.com/coreyhaines31/panelkit", from: "0.2.0")
+        .package(url: "https://github.com/coreyhaines31/panelkit", from: "0.2.1")
     ],
     targets: [
         .target(name: "CSpare"),
