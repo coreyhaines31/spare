@@ -153,11 +153,10 @@ struct Dashboard: View {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                 fascia
                 overviewCards
-                Divider()
                 Section {
-                    workloadList.padding(.horizontal, 8).padding(.bottom, 8)
+                    workloadList.padding(.bottom, 8)
                 } header: {
-                    listControls.background(Color(nsColor: .windowBackgroundColor))
+                    listControls.background(theme.background)
                 }
             }
         }.onAppear { if cpuIsTheConcern { sortCPU = true } }
@@ -183,18 +182,20 @@ struct Dashboard: View {
         }
     }
     private var listControls: some View {
-        VStack(spacing: 10) {
-            NativeSearchField(text: $query).frame(height: 24)
-            Picker("Show", selection: $filter) {
-                ForEach(WorkloadFilter.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }.pickerStyle(.segmented).labelsHidden()
+        VStack(spacing: 0) {
+            Field(text: $query, prompt: "Search apps, projects, or ports").padding(.top, 10)
+                .accessibilityLabel("Search apps, projects, or ports")
+            Tabs(WorkloadFilter.allCases.map { PanelChoice($0, $0.rawValue) }, selection: $filter)
+                .accessibilityLabel("Show")
             HStack {
-                Text("Using the most").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                Text("Using the most").font(PanelFont.condensed(10, .semibold)).tracking(2).textCase(.uppercase)
+                    .foregroundStyle(theme.sub)
                 Spacer()
-                Picker("Sort by", selection: $sortCPU) { Text("Memory").tag(false); Text("CPU").tag(true) }
-                    .pickerStyle(.segmented).labelsHidden().fixedSize().controlSize(.small)
-            }
-        }.padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 6)
+                Tabs([PanelChoice(false, "Memory"), PanelChoice(true, "CPU")], selection: $sortCPU)
+                    .fixedSize().padding(.trailing, -14).accessibilityLabel("Sort by")
+            }.padding(.horizontal, 14)
+        }.overlay(alignment: .top) { Rectangle().fill(theme.line).frame(height: 1) }
+            .overlay(alignment: .bottom) { Rectangle().fill(theme.line).frame(height: 1) }
     }
     private var workloadList: some View {
         VStack(spacing: 0) {
@@ -207,12 +208,12 @@ struct Dashboard: View {
                 }
             }
             if visible.isEmpty {
-                VStack(spacing: 8) {
-                    Text(monitor.ready ? "No matching items" : "Finding your apps…").font(.headline)
-                    if monitor.ready { Text("Try a different search or category.").foregroundStyle(.secondary) }
+                VStack(spacing: 6) {
+                    Text(monitor.ready ? "No matching items" : "Finding your apps…").font(PanelFont.body(13, .semibold))
+                    if monitor.ready { Text("Try a different search or category.").font(PanelFont.body(12)).foregroundStyle(theme.sub) }
                 }.frame(maxWidth: .infinity).padding(.vertical, 32)
             }
-        }
+        }.padding(.top, 4)
     }
     private func suggestionRow(_ workload: Workload, subtitle: String, symbol: String) -> some View {
         Button { path.append(workload) } label: {
