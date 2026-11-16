@@ -64,7 +64,7 @@ struct AppHelpersSection: View {
                 }
             }
             if all.count > collapsedCount {
-                Button(showAll ? "Show fewer" : "Show all \(all.count) processes") { showAll.toggle() }.buttonStyle(.panelLink)
+                Button(showAll ? "Show fewer" : "Show all \(all.count) processes") { showAll.toggle() }.buttonStyle(.panelQuietLink)
                     .padding(.horizontal, 14).padding(.vertical, 6)
             }
         }.padding(.bottom, 6)
@@ -83,7 +83,7 @@ struct AppHelpersSection: View {
                             .font(PanelFont.body(11.5)).fixedSize(horizontal: false, vertical: true)
                         HStack {
                             Button("Open Accessibility Settings") { ChromeShortcuts.openAccessibilitySettings() }.buttonStyle(.key)
-                            Button("Cancel") { monitor.cancelAccessibilityWait() }.buttonStyle(.panelLink)
+                            Button("Cancel") { monitor.cancelAccessibilityWait() }.buttonStyle(.panelQuietLink)
                         }
                     }
                 }
@@ -98,7 +98,7 @@ struct AppHelpersSection: View {
                         Text(tip).font(PanelFont.body(11.5)).fixedSize(horizontal: false, vertical: true)
                         Button("Open Performance settings") {
                             ChromeShortcuts.openPerformanceSettings(appURL: URL(fileURLWithPath: appPath))
-                        }.buttonStyle(.panelLink)
+                        }.buttonStyle(.panelQuietLink)
                     }
                 }
             }

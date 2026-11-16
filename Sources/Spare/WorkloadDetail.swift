@@ -44,7 +44,7 @@ struct WorkloadDetail: View {
                 if let path = workload.projectPath {
                     TextSection(heading: "Project", text: DisplayFormat.homePath(path))
                     Button("Show in Finder") { NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path) }
-                        .buttonStyle(.panelLink).padding(.horizontal, 14).padding(.bottom, 10)
+                        .buttonStyle(.panelQuietLink).padding(.horizontal, 14).padding(.bottom, 10)
                 }
                 if let command = workload.commandSummary(arguments: ProcessArguments.cached(for:)) {
                     TextSection(heading: "Command", text: command)
@@ -53,7 +53,7 @@ struct WorkloadDetail: View {
                     TextSection(heading: "Local server ports", text: workload.ports.map(String.init).joined(separator: ", ") + " · Listening on this Mac")
                     ForEach(workload.webPorts, id: \.self) { port in
                         if let url = URL(string: "http://localhost:\(port)") {
-                            Link(String("Open localhost:\(port)"), destination: url).buttonStyle(.panelLink)
+                            Link(String("Open localhost:\(port)"), destination: url).buttonStyle(.panelQuietLink)
                                 .padding(.horizontal, 14).padding(.bottom, 8)
                         }
                     }

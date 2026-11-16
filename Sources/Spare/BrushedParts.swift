@@ -70,29 +70,6 @@ extension ButtonStyle where Self == SpareButtonStyle {
     static var stopKey: SpareButtonStyle { SpareButtonStyle(kind: .destructive) }
 }
 
-/// A text link in the panel's secondary ink.
-struct PanelLinkStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Styled(configuration: configuration)
-    }
-    private struct Styled: View {
-        let configuration: Configuration
-        @Environment(\.brushed) private var theme
-        var body: some View {
-            configuration.label
-                .font(PanelFont.body(12, .medium))
-                .foregroundStyle(theme.ink2)
-                .underline(true, color: theme.ink2.opacity(0.4))
-                .opacity(configuration.isPressed ? 0.6 : 1)
-                .contentShape(Rectangle())
-        }
-    }
-}
-
-extension ButtonStyle where Self == PanelLinkStyle {
-    static var panelLink: PanelLinkStyle { PanelLinkStyle() }
-}
-
 /// A recessed box: the reading tiles, confirm boxes and notices.
 struct Recess<Content: View>: View {
     var tint: PanelStatus?

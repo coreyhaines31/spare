@@ -26,7 +26,7 @@ struct AwayRecapView: View {
                 HStack {
                     Text("Returned \(recap.ended.formatted(.dateTime.hour().minute()))").font(PanelFont.body(11.5)).foregroundStyle(theme.sub)
                     Spacer()
-                    Button("Open recap") { monitor.onOpenRecap?() }.buttonStyle(.panelLink)
+                    Button("Open recap") { monitor.onOpenRecap?() }.buttonStyle(.panelQuietLink)
                 }.padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 10)
             }
         }

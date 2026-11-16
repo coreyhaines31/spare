@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/coreyhaines31/panelkit",
       "state" : {
-        "revision" : "40e4cc589a9bae305966df8120a6507e655c35b0",
-        "version" : "0.1.0"
+        "branch" : "development",
+        "revision" : "92ae4e889ca0dc945dd0737ba313e2f90c269718"
       }
     },
     {
