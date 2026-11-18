@@ -49,6 +49,15 @@ Install Spare, the free open-source macOS menu bar app from https://github.com/c
 5. Open Spare with: open /Applications/Spare.app
 6. If `command -v spare` finds nothing, link Spare's command-line tool: ln -sf /Applications/Spare.app/Contents/MacOS/spare-cli /opt/homebrew/bin/spare (use /usr/local/bin/spare with sudo if /opt/homebrew/bin doesn't exist).
 7. Run `spare status` to confirm it works, then tell me to look for the knob icon in my menu bar. Spare has no Dock icon.
+8. Ask me whether future agent sessions should know about Spare. Only if I say yes, append this to your own global instructions file (~/.claude/CLAUDE.md for Claude Code, ~/.codex/AGENTS.md for Codex), unless it's already there, and tell me which file you changed:
+
+   This Mac has Spare, a menu bar app with a command-line tool called `spare`. Run `spare --help` to learn it.
+   Use it when I ask what's slowing my Mac down or what I can close, or before starting something heavy:
+   - `spare status` and `spare list --json` show what's using CPU and memory, grouped into apps, projects, and AI agents.
+   - `spare show <name>` explains what something is and what closing it would affect.
+   - `spare idle` and `spare leftovers` find apps I haven't used and browser sessions that automation tools left open.
+   - `spare strays` finds headless browsers, MCP servers, tunnels, and dev servers that agents left running and nothing owns anymore.
+   Never kill processes yourself. To close something, run `spare quit <name>`, `spare leftovers --close`, or `spare strays --close`. I approve or decline it in Spare's panel, and the command tells you which.
 ```
 
 Spare updates itself. When a new version is out it offers to install it, or you can choose **Check for Updates…** from the gear menu.
