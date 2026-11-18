@@ -4,7 +4,7 @@ import { z } from "zod";
 import { runSpare } from "./cli.js";
 import { registerFeedbackTool } from "./feedback.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const server = new McpServer(
   { name: "spare", version: VERSION },
