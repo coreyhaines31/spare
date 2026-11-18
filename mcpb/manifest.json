@@ -3,7 +3,7 @@
   "manifest_version": "0.4",
   "name": "spare",
   "display_name": "Spare",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ask Claude what's using your Mac: CPU, memory, AI agents, idle apps, and processes agents left running.",
   "long_description": "Spare is a free, open-source menu bar app that shows which apps, projects, and AI agents are using your Mac. This extension lets Claude read the same answers through Spare's `spare` command line tool.\n\nAsk things like \"what's using my Mac?\", \"why was it slow this morning?\", or \"what did my agents leave running?\".\n\nRequires the Spare app (https://spareformac.com). Everything is read-only: Claude can't quit or stop anything. Spare covers CPU and memory, not disk space.",
   "author": {
@@ -45,7 +45,8 @@
     { "name": "spare_idle", "description": "Apps left open but unused for 2+ hours" },
     { "name": "spare_strays", "description": "Processes agents left running" },
     { "name": "spare_leftovers", "description": "Browser sessions left open by automation" },
-    { "name": "spare_recap", "description": "CPU and memory history: today or this week" }
+    { "name": "spare_recap", "description": "CPU and memory history: today or this week" },
+    { "name": "submit_feedback", "description": "Drafts a GitHub issue link about a missing or broken tool for you to review and submit; sends nothing" }
   ],
   "compatibility": {
     "claude_desktop": ">=0.10.0",
