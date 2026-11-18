@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { accessSync, constants } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { withBugHint } from "./feedback.js";
 
 export const INSTALL_MESSAGE =
   "Spare isn't installed on this Mac, so there's nothing to ask yet. " +
@@ -115,13 +116,13 @@ export async function runSpare(args: string[]): Promise<RunResult> {
           }
           if (message) return resolve({ ok: false, text: message });
           if (error?.killed) {
-            return resolve({ ok: false, text: `Spare didn't answer within ${TIMEOUT_MS / 1000} seconds.` });
+            return resolve({ ok: false, text: withBugHint(`Spare didn't answer within ${TIMEOUT_MS / 1000} seconds.`) });
           }
-          resolve({ ok: false, text: `Spare's command line tool failed: ${error?.message ?? "unknown error"}` });
+          resolve({ ok: false, text: withBugHint(`Spare's command line tool failed: ${error?.message ?? "unknown error"}`) });
         },
       );
     } catch (error) {
-      resolve({ ok: false, text: `Couldn't start Spare's command line tool at ${cli}: ${(error as Error).message}` });
+      resolve({ ok: false, text: withBugHint(`Couldn't start Spare's command line tool at ${cli}: ${(error as Error).message}`) });
     }
   });
 }
