@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { runSpare } from "./cli.js";
+import { registerFeedbackTool } from "./feedback.js";
 
 const VERSION = "0.1.0";
 
@@ -156,5 +157,7 @@ server.registerTool(
   },
   async ({ period }) => respond(["recap", period]),
 );
+
+registerFeedbackTool(server, VERSION);
 
 await server.connect(new StdioServerTransport());
